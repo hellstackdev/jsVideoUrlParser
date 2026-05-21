@@ -27,6 +27,20 @@ npm run test
 npm run build
 ```
 
+# Spec-Driven Development
+
+This repository is initialized with [spec-kit](https://github.com/github/spec-kit) for Spec-Driven Development.
+
+Typical flow for changes:
+
+1. `/speckit.constitution`
+2. `/speckit.specify`
+3. `/speckit.plan`
+4. `/speckit.tasks`
+5. `/speckit.implement`
+
+Current modernization objective: migrate the JavaScript toolchain toward modern tooling (including Vite+) while preserving parser behavior and consumer compatibility.
+
 # npm
 
 ```
