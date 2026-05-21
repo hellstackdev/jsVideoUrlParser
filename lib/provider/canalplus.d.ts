@@ -1,13 +1,14 @@
-import { VideoInfo } from '../urlParser';
+import { VideoInfo } from "../urlParser";
 
 export interface CanalPlusUrlParameters {
-    [key: string]: any;
+  [key: string]: any;
 }
 
-export type CanalPlusMediaTypes = 'video';
+export type CanalPlusMediaTypes = "video";
 
-export interface CanalPlusVideoInfo extends VideoInfo<CanalPlusUrlParameters, CanalPlusMediaTypes> {
-    provider: 'canalplus';
+export interface CanalPlusVideoInfo
+  extends VideoInfo<CanalPlusUrlParameters, CanalPlusMediaTypes> {
+  provider: "canalplus";
 }
 
 export type CanalPlusParseResult = CanalPlusVideoInfo | undefined;

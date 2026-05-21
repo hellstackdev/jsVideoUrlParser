@@ -19,7 +19,6 @@ export default [
       name: 'urlParser',
       file: 'dist/jsVideoUrlParser.js',
       format: 'umd',
-
     },
     plugins: basePlugins,
   },
