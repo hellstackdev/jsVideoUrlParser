@@ -5,7 +5,6 @@
   "main": "./lib/index.js",
   "module": "./dist/jsVideoUrlParser.esm.js",
   "browser": "./dist/jsVideoUrlParser.js",
-  "type": "module",
   "types": "./lib/index.d.ts",
   "engines": {
     "node": ">=18"
