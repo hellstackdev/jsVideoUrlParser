@@ -1497,4 +1497,3 @@ var libExports = requireLib();
 var index = /*@__PURE__*/getDefaultExportFromCjs(libExports);
 
 export { index as default };
-//# sourceMappingURL=jsVideoUrlParser.esm.js.map
