@@ -1,5 +1,16 @@
 A javascript parser to extract information like provider, id, channel, start time from media urls.
 
+# Modernization status (v1)
+- Major modernization release target: `1.x`.
+- Core API compatibility preserved for `parse`, `create`, and `bind`.
+- Package formats available: CJS + ESM + UMD.
+- Deep import compatibility retained for `lib/provider/*`.
+- Bower support is deprecated and removed.
+
+## Runtime support policy
+- Node.js: `>=18`
+- Browser: modern evergreen browsers through bundled UMD/ESM artifacts.
+
 # Supported providers
  - [YouTube](https://www.youtube.com/)
  - [Vimeo](https://vimeo.com/)
@@ -25,6 +36,7 @@ npm install
 npm run lint
 npm run test
 npm run build
+npm run typecheck
 ```
 
 # Spec-Driven Development
@@ -47,36 +59,38 @@ Current modernization objective: migrate the JavaScript toolchain toward modern 
 npm install js-video-url-parser
 ```
 
-# bower
-
-```shell
-bower install js-video-url-parser
-```
-
 # Usage
 
-## ES2015+ / Webpack
+## ESM
 
+```js
+import urlParser from 'js-video-url-parser';
 ```
-// All plugins
-import urlParser from "js-video-url-parser";
 
-// Choose individual plugins
-import urlParser from "js-video-url-parser/lib/base";
-import "js-video-url-parser/lib/provider/canalplus";
-import "js-video-url-parser/lib/provider/coub";
-import "js-video-url-parser/lib/provider/dailymotion";
-import "js-video-url-parser/lib/provider/twitch";
-import "js-video-url-parser/lib/provider/vimeo";
-import "js-video-url-parser/lib/provider/wistia";
-import "js-video-url-parser/lib/provider/youku";
-import "js-video-url-parser/lib/provider/youtube";
-import "js-video-url-parser/lib/provider/teachertube";
-import "js-video-url-parser/lib/provider/ted";
-import "js-video-url-parser/lib/provider/tiktok";
-import "js-video-url-parser/lib/provider/loom";
-import "js-video-url-parser/lib/provider/facebook";
-import "js-video-url-parser/lib/provider/allocine";
+## CommonJS
+
+```js
+const urlParser = require('js-video-url-parser');
+```
+
+## Choose individual plugins
+
+```js
+import urlParser from 'js-video-url-parser/lib/base';
+import 'js-video-url-parser/lib/provider/canalplus';
+import 'js-video-url-parser/lib/provider/coub';
+import 'js-video-url-parser/lib/provider/dailymotion';
+import 'js-video-url-parser/lib/provider/twitch';
+import 'js-video-url-parser/lib/provider/vimeo';
+import 'js-video-url-parser/lib/provider/wistia';
+import 'js-video-url-parser/lib/provider/youku';
+import 'js-video-url-parser/lib/provider/youtube';
+import 'js-video-url-parser/lib/provider/teachertube';
+import 'js-video-url-parser/lib/provider/ted';
+import 'js-video-url-parser/lib/provider/tiktok';
+import 'js-video-url-parser/lib/provider/loom';
+import 'js-video-url-parser/lib/provider/facebook';
+import 'js-video-url-parser/lib/provider/allocine';
 ```
 
 ## Parsing
@@ -203,6 +217,9 @@ Run `npm run test` to create the parser and test your plugin.
 - [Wistia](https://github.com/Zod-/jsVideoUrlParser/wiki/Wistia)
 - [SoundCloud](https://github.com/Zod-/jsVideoUrlParser/wiki/SoundCloud)
 - [TeacherTube](https://github.com/Zod-/jsVideoUrlParser/wiki/TeacherTube)
+
+# Migration
+See [MIGRATION.md](./MIGRATION.md).
 
 # License
 
