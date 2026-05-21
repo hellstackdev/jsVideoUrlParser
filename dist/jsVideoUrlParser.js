@@ -1505,4 +1505,3 @@
 	return index;
 
 }));
-//# sourceMappingURL=jsVideoUrlParser.js.map
