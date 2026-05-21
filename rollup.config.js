@@ -19,7 +19,7 @@ export default [
       name: 'urlParser',
       file: 'dist/jsVideoUrlParser.js',
       format: 'umd',
-      sourcemap: true,
+
     },
     plugins: basePlugins,
   },
@@ -29,7 +29,6 @@ export default [
       name: 'urlParser',
       file: 'dist/jsVideoUrlParser.min.js',
       format: 'umd',
-      sourcemap: true,
     },
     plugins: [...basePlugins, terser()],
   },
@@ -38,7 +37,6 @@ export default [
     output: {
       file: 'dist/jsVideoUrlParser.esm.js',
       format: 'es',
-      sourcemap: true,
       exports: 'default',
     },
     plugins: basePlugins,
