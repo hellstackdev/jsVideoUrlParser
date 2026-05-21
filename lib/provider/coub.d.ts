@@ -1,13 +1,14 @@
-import { VideoInfo } from '../urlParser';
+import { VideoInfo } from "../urlParser";
 
 export interface CoubUrlParameters {
-    [key: string]: any;
+  [key: string]: any;
 }
 
-export type CoubMediaTypes = 'video';
+export type CoubMediaTypes = "video";
 
-export interface CoubVideoInfo extends VideoInfo<CoubUrlParameters, CoubMediaTypes> {
-    provider: 'coub';
+export interface CoubVideoInfo
+  extends VideoInfo<CoubUrlParameters, CoubMediaTypes> {
+  provider: "coub";
 }
 
 export type CoubParseResult = CoubVideoInfo | undefined;

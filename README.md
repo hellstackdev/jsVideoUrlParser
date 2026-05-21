@@ -1,22 +1,36 @@
-A javascript parser to extract information like provider, id, channel, start time from media urls.
+A javascript parser to extract information like provider, id, channel, start
+time from media urls.
+
+# Modernization status (v1)
+
+- Major modernization release target: `1.x`.
+- Core API compatibility preserved for `parse`, `create`, and `bind`.
+- Package formats available: CJS + ESM + UMD.
+- Deep import compatibility retained for `lib/provider/*`.
+- Bower support is deprecated and removed.
+
+## Runtime support policy
+
+- Node.js: `>=18`
+- Browser: modern evergreen browsers through bundled UMD/ESM artifacts.
 
 # Supported providers
- - [YouTube](https://www.youtube.com/)
- - [Vimeo](https://vimeo.com/)
- - [Twitch](https://www.twitch.tv/)
- - [Dailymotion](https://www.dailymotion.com)
- - [Canal+](https://www.mycanal.fr/)
- - [Youku](https://www.youku.com/)
- - [Coub](https://coub.com/)
- - [Wistia](https://wistia.com/)
- - [SoundCloud](https://soundcloud.com/)
- - [TeacherTube](https://www.teachertube.com)
- - [Ted](https://www.ted.com)
- - [Tiktok](https://www.tiktok.com)
- - [Facebook](https://www.facebook.com/)
- - [Loom](https://www.loom.com/)
- - [Allociné](https://allocine.fr/)
 
+- [YouTube](https://www.youtube.com/)
+- [Vimeo](https://vimeo.com/)
+- [Twitch](https://www.twitch.tv/)
+- [Dailymotion](https://www.dailymotion.com)
+- [Canal+](https://www.mycanal.fr/)
+- [Youku](https://www.youku.com/)
+- [Coub](https://coub.com/)
+- [Wistia](https://wistia.com/)
+- [SoundCloud](https://soundcloud.com/)
+- [TeacherTube](https://www.teachertube.com)
+- [Ted](https://www.ted.com)
+- [Tiktok](https://www.tiktok.com)
+- [Facebook](https://www.facebook.com/)
+- [Loom](https://www.loom.com/)
+- [Allociné](https://allocine.fr/)
 
 # Building Locally
 
@@ -25,6 +39,7 @@ npm install
 npm run lint
 npm run test
 npm run build
+npm run typecheck
 ```
 
 # Spec-Driven Development
@@ -47,21 +62,23 @@ Current modernization objective: migrate the JavaScript toolchain toward modern 
 npm install js-video-url-parser
 ```
 
-# bower
-
-```shell
-bower install js-video-url-parser
-```
-
 # Usage
 
-## ES2015+ / Webpack
+## ESM
 
-```
-// All plugins
+```js
 import urlParser from "js-video-url-parser";
+```
 
-// Choose individual plugins
+## CommonJS
+
+```js
+const urlParser = require("js-video-url-parser");
+```
+
+## Choose individual plugins
+
+```js
 import urlParser from "js-video-url-parser/lib/base";
 import "js-video-url-parser/lib/provider/canalplus";
 import "js-video-url-parser/lib/provider/coub";
@@ -118,7 +135,8 @@ different descriptions for the providers.
 }
 ```
 
-Parsing an incorrect url or trying to create one with an invalid object will return undefined
+Parsing an incorrect url or trying to create one with an invalid object will
+return undefined
 
 ```javascript
 > urlParser.parse('https://www.youuutube.com/watch?v=97276391')
@@ -129,9 +147,9 @@ undefined
 ## Url Creation
 
 The videoInfo objects can be turned back into urls with the `.create` function.
-The required parameter for this is the videoInfo object itself. Optional ones are
-the format of the url and the url parameters that should be added. Each provider
-has it's own default format.
+The required parameter for this is the videoInfo object itself. Optional ones
+are the format of the url and the url parameters that should be added. Each
+provider has it's own default format.
 
 ```javascript
 > urlParser.create({
@@ -148,9 +166,9 @@ has it's own default format.
 'https://www.youtube.com/watch?foo=bar&v=HRb7B9fPhfA'
 ```
 
-Parsing and creating can also be chained together to clean up an url for example.
-If you still want to reuse the generated parameters object you can use the keyword
-`'internal'` as params.
+Parsing and creating can also be chained together to clean up an url for
+example. If you still want to reuse the generated parameters object you can use
+the keyword `'internal'` as params.
 
 ```javascript
 > urlParser.create({
@@ -169,14 +187,18 @@ If you still want to reuse the generated parameters object you can use the keywo
 
 ```typescript
 // All plugins
-import urlParser, { YouTubeParseResult } from 'js-video-url-parser';
-const info = urlParser.parse('http://www.youtube.com/watch?v=HRb7B9fPhfA') as YouTubeParseResult;
+import urlParser, { YouTubeParseResult } from "js-video-url-parser";
+const info = urlParser.parse(
+  "http://www.youtube.com/watch?v=HRb7B9fPhfA",
+) as YouTubeParseResult;
 
 // Choose individual plugins
-import urlParser from 'js-video-url-parser/lib/base';
-import { YouTubeParseResult } from 'js-video-url-parser/lib/provider/youtube';
+import urlParser from "js-video-url-parser/lib/base";
+import { YouTubeParseResult } from "js-video-url-parser/lib/provider/youtube";
 
-const info = urlParser.parse('http://www.youtube.com/watch?v=HRb7B9fPhfA') as YouTubeParseResult;
+const info = urlParser.parse(
+  "http://www.youtube.com/watch?v=HRb7B9fPhfA",
+) as YouTubeParseResult;
 
 // Parse results can be undefined
 const id = info?.id;
@@ -184,9 +206,9 @@ const id = info?.id;
 
 ## Adding a provider
 
-Add a new file in the `lib/provider/` directory with the template found [here](lib/provider/template.js) and also add it to [index.js](lib/index.js).
-<br>
-Add some tests in `lib/provider/` with the template found
+Add a new file in the `lib/provider/` directory with the template found
+[here](lib/provider/template.js) and also add it to [index.js](lib/index.js).
+<br> Add some tests in `lib/provider/` with the template found
 [here](lib/provider/template.test.js).
 
 Run `npm run test` to create the parser and test your plugin.
@@ -203,6 +225,10 @@ Run `npm run test` to create the parser and test your plugin.
 - [Wistia](https://github.com/Zod-/jsVideoUrlParser/wiki/Wistia)
 - [SoundCloud](https://github.com/Zod-/jsVideoUrlParser/wiki/SoundCloud)
 - [TeacherTube](https://github.com/Zod-/jsVideoUrlParser/wiki/TeacherTube)
+
+# Migration
+
+See [MIGRATION.md](./MIGRATION.md).
 
 # License
 
