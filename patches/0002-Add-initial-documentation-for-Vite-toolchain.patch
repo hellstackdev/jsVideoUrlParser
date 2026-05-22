@@ -1,0 +1,35 @@
+From 74b5d5e7914ffe8171535c8578c72d0f9862145c Mon Sep 17 00:00:00 2001
+From: jeffrey-omega <>
+Date: Fri, 22 May 2026 15:27:17 +0200
+Subject: [PATCH 2/9] Add initial documentation for Vite+ toolchain
+
+---
+ AGENTS.md | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+ create mode 100644 AGENTS.md
+
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+index 0000000..362b82a
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,16 @@
++<!--VITE PLUS START-->
++
++# Using Vite+, the Unified Toolchain for the Web
++
++This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
++
++Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
++
++## Review Checklist
++
++- [ ] Run `vp install` after pulling remote changes and before getting started.
++- [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
++- [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
++- [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
++
++<!--VITE PLUS END-->
+-- 
+2.47.3
+

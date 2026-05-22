@@ -1,4 +1,6 @@
 module.exports = {
-  testURL: 'http://localhost',
+  testEnvironmentOptions: {
+    url: 'http://localhost',
+  },
   setupFilesAfterEnv: ['jest-expect-message'],
 };

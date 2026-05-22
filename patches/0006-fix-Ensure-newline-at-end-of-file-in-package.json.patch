@@ -1,0 +1,23 @@
+From e6d2860efa855d4e5aaab22b32f4eed998b55daf Mon Sep 17 00:00:00 2001
+From: jeffrey-omega <>
+Date: Fri, 22 May 2026 15:53:53 +0200
+Subject: [PATCH 6/9] fix: Ensure newline at end of file in package.json
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 98a6261..480bedd 100755
+--- a/package.json
++++ b/package.json
+@@ -70,4 +70,4 @@
+     "check": "npm run test && npm run build",
+     "all": "npm audit && npm run test && npm run lint && npm run build"
+   }
+-}
++}
+\ No newline at end of file
+-- 
+2.47.3
+
