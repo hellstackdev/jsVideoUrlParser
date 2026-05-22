@@ -41,6 +41,13 @@
 	    }
 	    return params;
 	  };
+
+	  /**
+	   * Combine parameters into a URL query string
+	   * @param {Record<string, string>} params - Parameters to combine
+	   * @param {boolean} [hasParams] - Whether URL already has parameters
+	   * @returns {string} Combined query string (e.g., '?key=value&key2=value2')
+	   */
 	  util.combineParams = function combineParams(params, hasParams) {
 	    if (_typeof(params) !== 'object') {
 	      return '';
@@ -65,6 +72,12 @@
 	  };
 
 	  //parses strings like 1h30m20s to seconds
+	  /**
+	   * Parse time format like "1h30m20s" to seconds
+	   * @param {string} timeString - Time in format like "1h30m20s"
+	   * @returns {number} Total time in seconds
+	   * @private
+	   */
 	  function getLetterTime(timeString) {
 	    var totalSeconds = 0;
 	    var timeValues = {
@@ -86,6 +99,12 @@
 	  }
 
 	  //parses strings like 1:30:20 to seconds
+	  /**
+	   * Parse time format like "1:30:20" to seconds
+	   * @param {string} timeString - Time in colon-separated format
+	   * @returns {number} Total time in seconds
+	   * @private
+	   */
 	  function getColonTime(timeString) {
 	    var totalSeconds = 0;
 	    var timeValues = [1, 1 * 60, 1 * 60 * 60, 1 * 60 * 60 * 24, 1 * 60 * 60 * 24 * 7];
@@ -95,6 +114,13 @@
 	    }
 	    return totalSeconds;
 	  }
+
+	  /**
+	   * Parse various time formats to seconds
+	   * Supports: "1h30m20s", "1:30:20", plain seconds
+	   * @param {string|number} [timeString] - Time in various formats
+	   * @returns {number} Total time in seconds (0 if invalid)
+	   */
 	  util.getTime = function getTime(timeString) {
 	    if (typeof timeString === 'undefined') {
 	      return 0;
@@ -115,20 +141,64 @@
 	function requireUrlParser() {
 	  if (hasRequiredUrlParser) return urlParser;
 	  hasRequiredUrlParser = 1;
+	  /**
+	   * @typedef {Object} VideoInfo
+	   * @property {string} id - The video/media ID (provider-specific)
+	   * @property {string} mediaType - Type of media (e.g., 'video', 'audio', 'playlist', 'channel')
+	   * @property {string} provider - Provider name (e.g., 'youtube', 'vimeo')
+	   * @property {QueryParams} [params] - Additional parameters extracted from URL
+	   * @property {string} [list] - Optional list/playlist ID
+	   * @property {string} [name] - Optional name for channels or handles
+	   */
+
+	  /**
+	   * @typedef {Object} CreateOptions
+	   * @property {VideoInfo} videoInfo - Video information to recreate URL from
+	   * @property {QueryParams} [params] - Parameters to apply ('internal' for original params)
+	   * @property {string} [format] - URL format (e.g., 'short', 'long', 'embed')
+	   */
+
+	  /**
+	   * @typedef {Object} Provider
+	   * @property {string} provider - Unique provider identifier
+	   * @property {string[]} [alternatives] - Alternative provider names
+	   * @property {string} defaultFormat - Default URL format
+	   * @property {Object<string, Function>} formats - Format functions (shortUrl, longUrl, etc)
+	   * @property {Function} parse - Parse URL to VideoInfo
+	   */
+
 	  var _require$$ = requireUtil(),
 	    getQueryParams = _require$$.getQueryParams;
+
+	  /**
+	   * URL Parser for extracting video information from various provider URLs
+	   * @constructor
+	   */
 	  function UrlParser() {
 	    for (var _i = 0, _arr = ['parseProvider', 'parse', 'bind', 'create']; _i < _arr.length; _i++) {
 	      var key = _arr[_i];
 	      this[key] = this[key].bind(this);
 	    }
+	    /** @type {Object<string, Provider>} Registered provider plugins */
 	    this.plugins = {};
 	  }
 	  urlParser = UrlParser;
+
+	  /**
+	   * Extract provider name from URL
+	   * @param {string} url - URL to parse
+	   * @returns {string|undefined} Provider name or undefined if not found
+	   */
 	  UrlParser.prototype.parseProvider = function (url) {
 	    var match = url.match(/(?:(?:https?:)?\/\/)?(?:[^.]+\.)?(\w+)\./i);
 	    return match ? match[1] : undefined;
 	  };
+
+	  /**
+	   * Parse URL and extract video information
+	   * @param {string} url - URL to parse
+	   * @returns {VideoInfo|undefined} Parsed video information or undefined if not parseable
+	   */
 	  UrlParser.prototype.parse = function (url) {
 	    if (typeof url === 'undefined') {
 	      return undefined;
@@ -146,6 +216,12 @@
 	    }
 	    return result;
 	  };
+
+	  /**
+	   * Register a provider plugin with the parser
+	   * @param {Provider} plugin - Provider plugin to register
+	   * @returns {void}
+	   */
 	  UrlParser.prototype.bind = function (plugin) {
 	    this.plugins[plugin.provider] = plugin;
 	    if (plugin.alternatives) {
@@ -154,6 +230,12 @@
 	      }
 	    }
 	  };
+
+	  /**
+	   * Reconstruct a URL from video information
+	   * @param {CreateOptions} op - Options with VideoInfo and format
+	   * @returns {string|undefined} Reconstructed URL or undefined if format not available
+	   */
 	  UrlParser.prototype.create = function (op) {
 	    if (_typeof(op) !== 'object' || _typeof(op.videoInfo) !== 'object') {
 	      return undefined;
@@ -171,6 +253,13 @@
 	    }
 	    return undefined;
 	  };
+
+	  /**
+	   * Remove empty parameter objects from video info
+	   * @param {VideoInfo} result - Video information
+	   * @returns {VideoInfo} Video info with empty params removed
+	   * @private
+	   */
 	  function removeEmptyParameters(result) {
 	    if (result.params && Object.keys(result.params).length === 0) {
 	      delete result.params;
@@ -180,6 +269,27 @@
 	  return urlParser;
 	}
 
+	/**
+	 * URL Parser instance
+	 * 
+	 * Main entry point for parsing video URLs and reconstructing URLs from video info.
+	 * 
+	 * @type {UrlParser}
+	 * 
+	 * @example
+	 * // Parse a YouTube URL
+	 * const parser = require('js-video-url-parser');
+	 * const videoInfo = parser.parse('https://www.youtube.com/watch?v=aqz-KE-bpKQ');
+	 * // Returns: { id: 'aqz-KE-bpKQ', mediaType: 'video', provider: 'youtube' }
+	 * 
+	 * @example
+	 * // Create a URL from video info
+	 * const url = parser.create({
+	 *   videoInfo: { id: 'aqz-KE-bpKQ', mediaType: 'video', provider: 'youtube' },
+	 *   format: 'short'
+	 * });
+	 * // Returns: 'https://youtu.be/aqz-KE-bpKQ'
+	 */
 	var base;
 	var hasRequiredBase;
 	function requireBase() {
@@ -1434,6 +1544,31 @@
 	  return facebook;
 	}
 
+	/**
+	 * js-video-url-parser
+	 * 
+	 * A parser to extract provider, video ID, media type, and other metadata 
+	 * from video URLs (YouTube, Vimeo, Dailymotion, Twitch, SoundCloud, TikTok, etc.)
+	 * and reconstruct URLs in various formats.
+	 * 
+	 * @type {UrlParser}
+	 * 
+	 * @example
+	 * // Parse a Vimeo URL
+	 * const parser = require('js-video-url-parser');
+	 * const info = parser.parse('https://vimeo.com/96063277');
+	 * // Returns: { id: '96063277', mediaType: 'video', provider: 'vimeo' }
+	 * 
+	 * @example
+	 * // Create a short URL from parsed info
+	 * const shortUrl = parser.create({
+	 *   videoInfo: { id: '96063277', mediaType: 'video', provider: 'vimeo' },
+	 *   format: 'short'
+	 * });
+	 * 
+	 * @example
+	 * // ESM usage: import parser from 'js-video-url-parser/esm';
+	 */
 	var lib;
 	var hasRequiredLib;
 	function requireLib() {
