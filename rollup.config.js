@@ -15,6 +15,7 @@ export default [
       resolve(),
       commonjs(),
       babel({
+        babelHelpers: 'bundled',
         presets: [['@babel/env', {'modules': false}]],
       }),
     ],
@@ -29,6 +30,7 @@ export default [
       resolve(),
       commonjs(),
       babel({
+        babelHelpers: 'bundled',
         presets: [['@babel/env', {'modules': false}]],
       }),
       terser(),
