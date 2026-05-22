@@ -13,4 +13,11 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 - [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
 - [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
 
+## Branching Policy
+
+- Do modernization work only on feature branches.
+- Merge validated feature branches into `develop` only.
+- Treat `master` and `main` as protected branches; only the repository owner merges those branches.
+- Do not make modernization edits directly on `master` or `main` unless explicitly instructed by the repository owner.
+
 <!--VITE PLUS END-->
