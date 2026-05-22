@@ -7,32 +7,24 @@ on:
       - main
       - master
   schedule:
-    - cron: "0 5 * * 1"
-
-env:
-  # not needed for audit
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-
-permissions:
-  contents: read # to fetch code (actions/checkout)
+    - cron: '0 5 * * 1'
 
 jobs:
-  Audit:
-    if: github.repository == 'hellstackdev/jsVideoUrlParser'
+  npm-audit:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          version: 18
-          cache: true
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Audit dependencies
-        run: pnpm audit --prod
+        run: npm audit --audit-level=high
