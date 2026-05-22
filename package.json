@@ -75,5 +75,6 @@
     "lintdryfix": "eslint . --fix-dry-run",
     "check": "npm run test && npm run build",
     "all": "npm audit && npm run test && npm run lint && npm run build"
-  }
+  },
+  "packageManager": "pnpm@11.2.2"
 }
