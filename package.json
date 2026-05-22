@@ -2,9 +2,22 @@
   "name": "js-video-url-parser",
   "version": "0.5.1",
   "description": "A parser to extract provider, video id, starttime and others from YouTube, Vimeo, ... urls",
-  "main": "lib/index.js",
+  "main": "./lib/index.js",
   "browser": "dist/jsVideoUrlParser.js",
-  "types": "lib",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "require": "./lib/index.js",
+      "default": "./lib/index.js"
+    },
+    "./lib/*": {
+      "types": "./lib/*.d.ts",
+      "require": "./lib/*.js",
+      "default": "./lib/*.js"
+    },
+    "./package.json": "./package.json"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Zod-/jsVideoUrlParser.git"
@@ -54,6 +67,7 @@
     "build": "rollup -c rollup.config.js",
     "lint": "eslint . --fix",
     "lintdryfix": "eslint . --fix-dry-run",
+    "check": "npm run test && npm run build",
     "all": "npm audit && npm run test && npm run lint && npm run build"
   }
 }
