@@ -73,8 +73,9 @@
     "build": "rollup -c rollup.config.js",
     "lint": "eslint . --fix",
     "lintdryfix": "eslint . --fix-dry-run",
+    "typecheck": "tsc --noEmit",
     "check": "npm run test && npm run build",
-    "all": "npm audit && npm run test && npm run lint && npm run build"
+    "all": "npm audit && npm run test && npm run lint && npm run typecheck && npm run build"
   },
   "packageManager": "pnpm@11.2.2"
 }
