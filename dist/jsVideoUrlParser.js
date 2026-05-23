@@ -8,6 +8,92 @@
 		return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 	}
 
+	function _arrayLikeToArray(r, a) {
+	  (null == a || a > r.length) && (a = r.length);
+	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	  return n;
+	}
+	function _arrayWithHoles(r) {
+	  if (Array.isArray(r)) return r;
+	}
+	function _createForOfIteratorHelper(r, e) {
+	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (!t) {
+	    if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
+	      t && (r = t);
+	      var n = 0,
+	        F = function () {};
+	      return {
+	        s: F,
+	        n: function () {
+	          return n >= r.length ? {
+	            done: true
+	          } : {
+	            done: false,
+	            value: r[n++]
+	          };
+	        },
+	        e: function (r) {
+	          throw r;
+	        },
+	        f: F
+	      };
+	    }
+	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	  }
+	  var o,
+	    a = true,
+	    u = false;
+	  return {
+	    s: function () {
+	      t = t.call(r);
+	    },
+	    n: function () {
+	      var r = t.next();
+	      return a = r.done, r;
+	    },
+	    e: function (r) {
+	      u = true, o = r;
+	    },
+	    f: function () {
+	      try {
+	        a || null == t.return || t.return();
+	      } finally {
+	        if (u) throw o;
+	      }
+	    }
+	  };
+	}
+	function _iterableToArrayLimit(r, l) {
+	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (null != t) {
+	    var e,
+	      n,
+	      i,
+	      u,
+	      a = [],
+	      f = true,
+	      o = false;
+	    try {
+	      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+	    } catch (r) {
+	      o = true, n = r;
+	    } finally {
+	      try {
+	        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+	      } finally {
+	        if (o) throw n;
+	      }
+	    }
+	    return a;
+	  }
+	}
+	function _nonIterableRest() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _slicedToArray(r, e) {
+	  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+	}
 	function _typeof(o) {
 	  "@babel/helpers - typeof";
 
@@ -16,6 +102,13 @@
 	  } : function (o) {
 	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
 	  }, _typeof(o);
+	}
+	function _unsupportedIterableToArray(r, a) {
+	  if (r) {
+	    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	    var t = {}.toString.call(r).slice(8, -1);
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	  }
 	}
 
 	var util = {};
@@ -269,10 +362,268 @@
 	  return urlParser;
 	}
 
+	function commonjsRequire(path) {
+		throw new Error('Could not dynamically require "' + path + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.');
+	}
+
+	/**
+	 * Provider Registry
+	 * 
+	 * Central registry for all video provider plugins. Allows:
+	 * - Decoupled provider registration
+	 * - Lazy or eager loading of providers
+	 * - Cleaner ESM module structure
+	 * - Better control over side effects
+	 * 
+	 * @module provider/registry
+	 */
+	var registry;
+	var hasRequiredRegistry;
+	function requireRegistry() {
+	  if (hasRequiredRegistry) return registry;
+	  hasRequiredRegistry = 1;
+	  /**
+	   * Global registry of providers
+	   * @type {Map<string, Function>}
+	   * @private
+	   */
+	  var providers = new Map();
+
+	  /**
+	   * Register a provider plugin with the parser
+	   * 
+	   * @param {Function} ProviderConstructor - Provider class/constructor
+	   * @returns {Function} The provider constructor (for chaining)
+	   * 
+	   * @example
+	   * // In provider module (e.g., youtube.js):
+	   * module.exports = registerProvider(YouTube);
+	   * 
+	   * @example
+	   * // In parser initialization:
+	   * parser.bind(new YouTube());
+	   */
+	  function registerProvider(ProviderConstructor) {
+	    if (typeof ProviderConstructor !== 'function') {
+	      throw new TypeError('Provider must be a constructor function');
+	    }
+
+	    // Create an instance to get provider name and alternatives
+	    var instance = new ProviderConstructor();
+	    if (!instance.provider) {
+	      throw new Error("Provider missing 'provider' property: ".concat(ProviderConstructor.name));
+	    }
+	    providers.set(instance.provider, ProviderConstructor);
+	    return ProviderConstructor;
+	  }
+
+	  /**
+	   * Get all registered provider constructors
+	   * 
+	   * @returns {Map<string, Function>} Map of provider names to constructors
+	   * 
+	   * @example
+	   * const allProviders = getAllProviders();
+	   * for (const [name, Constructor] of allProviders) {
+	   *   console.log(`Provider: ${name}`);
+	   * }
+	   */
+	  function getAllProviders() {
+	    return new Map(providers);
+	  }
+
+	  /**
+	   * Get a specific provider constructor by name
+	   * 
+	   * @param {string} name - Provider name (e.g., 'youtube', 'vimeo')
+	   * @returns {Function|undefined} Provider constructor or undefined
+	   * 
+	   * @example
+	   * const YouTubeProvider = getProvider('youtube');
+	   * if (YouTubeProvider) {
+	   *   parser.bind(new YouTubeProvider());
+	   * }
+	   */
+	  function getProvider(name) {
+	    return providers.get(name);
+	  }
+
+	  /**
+	   * Clear all registered providers (useful for testing)
+	   * 
+	   * @returns {void}
+	   */
+	  function clearProviders() {
+	    providers.clear();
+	  }
+
+	  /**
+	   * Get count of registered providers
+	   * 
+	   * @returns {number} Number of registered providers
+	   */
+	  function getProviderCount() {
+	    return providers.size;
+	  }
+	  registry = {
+	    registerProvider: registerProvider,
+	    getAllProviders: getAllProviders,
+	    getProvider: getProvider,
+	    clearProviders: clearProviders,
+	    getProviderCount: getProviderCount
+	  };
+	  return registry;
+	}
+
+	var loader;
+	var hasRequiredLoader;
+	function requireLoader() {
+	  if (hasRequiredLoader) return loader;
+	  hasRequiredLoader = 1;
+	  var _require$$ = requireRegistry(),
+	    getAllProviders = _require$$.getAllProviders;
+
+	  /**
+	   * Available provider modules
+	   * @type {Array<string>}
+	   * @private
+	   */
+	  var PROVIDER_MODULES = ['./allocine', './canalplus', './coub', './dailymotion', './facebook', './loom', './soundcloud', './teachertube', './ted', './tiktok', './twitch', './vimeo', './wistia', './youku', './youtube'];
+
+	  /**
+	   * Load and bind all built-in providers to the given parser
+	   * 
+	   * This function requires all provider modules and binds them to the parser.
+	   * Providers auto-register when required, so we just need to instantiate
+	   * and bind them.
+	   * 
+	   * @param {UrlParser} parser - Parser instance to bind providers to
+	   * @returns {UrlParser} The parser instance (for chaining)
+	   * 
+	   * @example
+	   * const parser = new UrlParser();
+	   * loadProviders(parser);
+	   * parser.parse('https://youtube.com/watch?v=aqz-KE-bpKQ');
+	   */
+	  function loadProviders(parser) {
+	    if (!parser || typeof parser.bind !== 'function') {
+	      throw new TypeError('Parser must have a bind() method');
+	    }
+
+	    // Require all provider modules (they auto-register)
+	    PROVIDER_MODULES.forEach(function (modulePath) {
+	      commonjsRequire(modulePath);
+	    });
+
+	    // Get all registered providers and bind them
+	    var providers = getAllProviders();
+	    var _iterator = _createForOfIteratorHelper(providers),
+	      _step;
+	    try {
+	      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	        var _step$value = _slicedToArray(_step.value, 2),
+	          name = _step$value[0],
+	          ProviderConstructor = _step$value[1];
+	        var instance = new ProviderConstructor();
+	        parser.bind(instance);
+	      }
+	    } catch (err) {
+	      _iterator.e(err);
+	    } finally {
+	      _iterator.f();
+	    }
+	    return parser;
+	  }
+
+	  /**
+	   * Load only specific providers by name
+	   * 
+	   * Useful when you only need a subset of providers to reduce bundle size
+	   * in ESM contexts.
+	   * 
+	   * @param {UrlParser} parser - Parser instance to bind providers to
+	   * @param {string[]} providerNames - Provider names to load (e.g., ['youtube', 'vimeo'])
+	   * @returns {UrlParser} The parser instance (for chaining)
+	   * 
+	   * @example
+	   * const parser = new UrlParser();
+	   * loadSpecificProviders(parser, ['youtube', 'vimeo']);
+	   * // Only YouTube and Vimeo providers are available
+	   */
+	  function loadSpecificProviders(parser, providerNames) {
+	    if (!parser || typeof parser.bind !== 'function') {
+	      throw new TypeError('Parser must have a bind() method');
+	    }
+	    if (!Array.isArray(providerNames)) {
+	      throw new TypeError('providerNames must be an array');
+	    }
+	    var providerMap = {
+	      allocine: './allocine',
+	      canalplus: './canalplus',
+	      coub: './coub',
+	      dailymotion: './dailymotion',
+	      facebook: './facebook',
+	      loom: './loom',
+	      soundcloud: './soundcloud',
+	      teachertube: './teachertube',
+	      ted: './ted',
+	      tiktok: './tiktok',
+	      twitch: './twitch',
+	      vimeo: './vimeo',
+	      wistia: './wistia',
+	      youku: './youku',
+	      youtube: './youtube'
+	    };
+
+	    // Load requested providers
+	    var _iterator2 = _createForOfIteratorHelper(providerNames),
+	      _step2;
+	    try {
+	      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	        var name = _step2.value;
+	        var modulePath = providerMap[name];
+	        if (!modulePath) {
+	          throw new Error("Unknown provider: ".concat(name));
+	        }
+	        commonjsRequire(modulePath);
+	      }
+
+	      // Bind all registered providers
+	    } catch (err) {
+	      _iterator2.e(err);
+	    } finally {
+	      _iterator2.f();
+	    }
+	    var providers = getAllProviders();
+	    var _iterator3 = _createForOfIteratorHelper(providers),
+	      _step3;
+	    try {
+	      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	        var _step3$value = _slicedToArray(_step3.value, 2),
+	          _name = _step3$value[0],
+	          ProviderConstructor = _step3$value[1];
+	        var instance = new ProviderConstructor();
+	        parser.bind(instance);
+	      }
+	    } catch (err) {
+	      _iterator3.e(err);
+	    } finally {
+	      _iterator3.f();
+	    }
+	    return parser;
+	  }
+	  loader = {
+	    loadProviders: loadProviders,
+	    loadSpecificProviders: loadSpecificProviders
+	  };
+	  return loader;
+	}
+
 	/**
 	 * URL Parser instance
 	 * 
 	 * Main entry point for parsing video URLs and reconstructing URLs from video info.
+	 * Providers are automatically loaded and registered on initialization.
 	 * 
 	 * @type {UrlParser}
 	 * 
@@ -296,1618 +647,12 @@
 	  if (hasRequiredBase) return base;
 	  hasRequiredBase = 1;
 	  var UrlParser = requireUrlParser();
+	  var _require$$ = requireLoader(),
+	    loadProviders = _require$$.loadProviders;
 	  var parser = new UrlParser();
+	  loadProviders(parser);
 	  base = parser;
 	  return base;
-	}
-
-	/**
-	 * AlloCine provider plugin
-	 * Supports parsing and URL generation for AlloCine movies and trailers
-	 * @constructor
-	 */
-	var allocine;
-	var hasRequiredAllocine;
-	function requireAllocine() {
-	  if (hasRequiredAllocine) return allocine;
-	  hasRequiredAllocine = 1;
-	  function Allocine() {
-	    this.provider = 'allocine';
-	    this.alternatives = [];
-	    this.defaultFormat = 'embed';
-	    this.formats = {
-	      embed: this.createEmbedUrl
-	    };
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  allocine = Allocine;
-	  Allocine.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:\/video\/player_gen_cmedia=)([A-Za-z0-9]+)/i);
-	    return match ? match[1] : undefined;
-	  };
-	  Allocine.prototype.parse = function (url) {
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      id: this.parseUrl(url)
-	    };
-	    return result.id ? result : undefined;
-	  };
-	  Allocine.prototype.createEmbedUrl = function (vi) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    return 'https://player.allocine.fr/' + vi.id + '.html';
-	  };
-	  requireBase().bind(new Allocine());
-	  return allocine;
-	}
-
-	/**
-	 * CanalPlus provider plugin
-	 * Supports parsing and URL generation for CanalPlus videos
-	 * @constructor
-	 */
-	var canalplus;
-	var hasRequiredCanalplus;
-	function requireCanalplus() {
-	  if (hasRequiredCanalplus) return canalplus;
-	  hasRequiredCanalplus = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function CanalPlus() {
-	    this.provider = 'canalplus';
-	    this.defaultFormat = 'embed';
-	    this.formats = {
-	      embed: this.createEmbedUrl
-	    };
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  canalplus = CanalPlus;
-	  CanalPlus.prototype.parseParameters = function (params) {
-	    delete params.vid;
-	    return params;
-	  };
-	  CanalPlus.prototype.parse = function (url, params) {
-	    var _this = this;
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      id: params.vid
-	    };
-	    result.params = _this.parseParameters(params);
-	    if (!result.id) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  CanalPlus.prototype.createEmbedUrl = function (vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = 'http://player.canalplus.fr/embed/';
-	    params.vid = vi.id;
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new CanalPlus());
-	  return canalplus;
-	}
-
-	/**
-	 * Coub provider plugin
-	 * Supports parsing and URL generation for Coub videos
-	 * @constructor
-	 */
-	var coub;
-	var hasRequiredCoub;
-	function requireCoub() {
-	  if (hasRequiredCoub) return coub;
-	  hasRequiredCoub = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function Coub() {
-	    this.provider = 'coub';
-	    this.defaultFormat = 'long';
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  coub = Coub;
-	  Coub.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:embed|view)\/([a-zA-Z\d]+)/i);
-	    return match ? match[1] : undefined;
-	  };
-	  Coub.prototype.parse = function (url, params) {
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      params: params,
-	      id: this.parseUrl(url)
-	    };
-	    if (!result.id) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  Coub.prototype.createUrl = function (baseUrl, vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = baseUrl + vi.id;
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Coub.prototype.createLongUrl = function (vi, params) {
-	    return this.createUrl('https://coub.com/view/', vi, params);
-	  };
-	  Coub.prototype.createEmbedUrl = function (vi, params) {
-	    return this.createUrl('//coub.com/embed/', vi, params);
-	  };
-	  requireBase().bind(new Coub());
-	  return coub;
-	}
-
-	/**
-	 * Dailymotion provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Videos: dailymotion.com/video/ID or dai.ly/ID
-	 * - With start times and parameters
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Simple video
-	 * provider.parse('https://dailymotion.com/video/x12345ab')
-	 * // Returns: { id: 'x12345ab', mediaType: 'video', provider: 'dailymotion' }
-	 */
-	var dailymotion;
-	var hasRequiredDailymotion;
-	function requireDailymotion() {
-	  if (hasRequiredDailymotion) return dailymotion;
-	  hasRequiredDailymotion = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams,
-	    getTime = _require$$.getTime;
-	  function Dailymotion() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'dailymotion';
-
-	    /** @type {string[]} Alternative domain names */
-	    this.alternatives = ['dai'];
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "short": this.createShortUrl,
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl,
-	      image: this.createImageUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  dailymotion = Dailymotion;
-
-	  /**
-	   * Extract and normalize parameters from query string
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Record<string, string>} Normalized parameters
-	   * @private
-	   */
-	  Dailymotion.prototype.parseParameters = function (params) {
-	    return this.parseTime(params);
-	  };
-
-	  /**
-	   * Parse time parameter to seconds
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Record<string, string>} Parameters with parsed time
-	   * @private
-	   */
-	  Dailymotion.prototype.parseTime = function (params) {
-	    if (params.start) {
-	      params.start = getTime(params.start);
-	    }
-	    return params;
-	  };
-	  Dailymotion.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:\/video|ly)\/([A-Za-z0-9]+)/i);
-	    return match ? match[1] : undefined;
-	  };
-	  Dailymotion.prototype.parse = function (url, params) {
-	    var _this = this;
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      params: _this.parseParameters(params),
-	      id: _this.parseUrl(url)
-	    };
-	    return result.id ? result : undefined;
-	  };
-	  Dailymotion.prototype.createUrl = function (base, vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    return base + vi.id + combineParams(params);
-	  };
-	  Dailymotion.prototype.createShortUrl = function (vi, params) {
-	    return this.createUrl('https://dai.ly/', vi, params);
-	  };
-	  Dailymotion.prototype.createLongUrl = function (vi, params) {
-	    return this.createUrl('https://dailymotion.com/video/', vi, params);
-	  };
-	  Dailymotion.prototype.createEmbedUrl = function (vi, params) {
-	    return this.createUrl('https://www.dailymotion.com/embed/video/', vi, params);
-	  };
-	  Dailymotion.prototype.createImageUrl = function (vi, params) {
-	    delete params.start;
-	    return this.createUrl('https://www.dailymotion.com/thumbnail/video/', vi, params);
-	  };
-	  requireBase().bind(new Dailymotion());
-	  return dailymotion;
-	}
-
-	/**
-	 * Loom provider plugin
-	 * Supports parsing and URL generation for Loom recordings
-	 * @constructor
-	 */
-	var loom;
-	var hasRequiredLoom;
-	function requireLoom() {
-	  if (hasRequiredLoom) return loom;
-	  hasRequiredLoom = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function Loom() {
-	    this.provider = 'loom';
-	    this.defaultFormat = 'long';
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  loom = Loom;
-	  Loom.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:share|embed)\/([a-zA-Z\d]+)/i);
-	    return match ? match[1] : undefined;
-	  };
-	  Loom.prototype.parse = function (url, params) {
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      params: params,
-	      id: this.parseUrl(url)
-	    };
-	    return result.id ? result : undefined;
-	  };
-	  Loom.prototype.createUrl = function (baseUrl, vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = baseUrl + vi.id;
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Loom.prototype.createLongUrl = function (vi, params) {
-	    return this.createUrl('https://loom.com/share/', vi, params);
-	  };
-	  Loom.prototype.createEmbedUrl = function (vi, params) {
-	    return this.createUrl('//loom.com/embed/', vi, params);
-	  };
-	  requireBase().bind(new Loom());
-	  return loom;
-	}
-
-	/**
-	 * Twitch provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Live streams: twitch.tv/CHANNEL
-	 * - VODs (videos): twitch.tv/videos/ID or twitch.tv/CHANNEL/video/ID
-	 * - Clips: twitch.tv/CHANNEL/clip/ID or clips.twitch.tv/ID
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Live stream
-	 * provider.parse('https://twitch.tv/monstercat')
-	 * // Returns: { id: 'monstercat', mediaType: 'stream', provider: 'twitch' }
-	 * 
-	 * @example
-	 * // Video with start time
-	 * provider.parse('https://twitch.tv/videos/1234567890?t=1h30m')
-	 * // Returns: { id: 'v1234567890', mediaType: 'video', params: { start: 5400 } }
-	 */
-	var twitch;
-	var hasRequiredTwitch;
-	function requireTwitch() {
-	  if (hasRequiredTwitch) return twitch;
-	  hasRequiredTwitch = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams,
-	    getTime = _require$$.getTime;
-	  function Twitch() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'twitch';
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video',
-	      STREAM: 'stream',
-	      CLIP: 'clip'
-	    };
-	  }
-	  twitch = Twitch;
-
-	  /**
-	   * Separate media type prefix from ID
-	   * @param {string} id - ID with prefix (v=video, c=clip, etc)
-	   * @returns {Object} Object with {pre, id} - prefix and unprefixed ID
-	   * @private
-	   */
-	  Twitch.prototype.seperateId = function (id) {
-	    return {
-	      pre: id[0],
-	      id: id.substr(1)
-	    };
-	  };
-
-	  /**
-	   * Parse channel information from Twitch URL
-	   * @param {Object} result - Parsing result accumulator
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Object} Result with channel set
-	   * @private
-	   */
-	  Twitch.prototype.parseChannel = function (result, params) {
-	    var channel = params.channel || params.utm_content || result.channel;
-	    delete params.utm_content;
-	    delete params.channel;
-	    return channel;
-	  };
-	  Twitch.prototype.parseUrl = function (url, result, params) {
-	    var match;
-	    match = url.match(/(clips\.)?twitch\.tv\/(?:(?:videos\/(\d+))|(\w+(?:-[\w\d-]+)?)(?:\/clip\/(\w+))?)/i);
-	    if (match && match[2]) {
-	      //video
-	      result.id = 'v' + match[2];
-	    } else if (params.video) {
-	      //video embed
-	      result.id = params.video;
-	      delete params.video;
-	    } else if (params.clip) {
-	      //clips embed
-	      result.id = params.clip;
-	      result.isClip = true;
-	      delete params.clip;
-	    } else if (match && match[1] && match[3]) {
-	      //clips.twitch.tv/id
-	      result.id = match[3];
-	      result.isClip = true;
-	    } else if (match && match[3] && match[4]) {
-	      //twitch.tv/channel/clip/id
-	      result.channel = match[3];
-	      result.id = match[4];
-	      result.isClip = true;
-	    } else if (match && match[3]) {
-	      result.channel = match[3];
-	    }
-	    return result;
-	  };
-	  Twitch.prototype.parseMediaType = function (result) {
-	    var mediaType;
-	    if (result.id) {
-	      if (result.isClip) {
-	        mediaType = this.mediaTypes.CLIP;
-	        delete result.isClip;
-	      } else {
-	        mediaType = this.mediaTypes.VIDEO;
-	      }
-	    } else if (result.channel) {
-	      mediaType = this.mediaTypes.STREAM;
-	    }
-	    return mediaType;
-	  };
-	  Twitch.prototype.parseParameters = function (params) {
-	    if (params.t) {
-	      params.start = getTime(params.t);
-	      delete params.t;
-	    }
-	    return params;
-	  };
-	  Twitch.prototype.parse = function (url, params) {
-	    var _this = this;
-	    var result = {};
-	    result = _this.parseUrl(url, result, params);
-	    result.channel = _this.parseChannel(result, params);
-	    result.mediaType = _this.parseMediaType(result);
-	    result.params = _this.parseParameters(params);
-	    return result.channel || result.id ? result : undefined;
-	  };
-	  Twitch.prototype.createLongUrl = function (vi, params) {
-	    var url = '';
-	    if (vi.mediaType === this.mediaTypes.STREAM && vi.channel) {
-	      url = 'https://twitch.tv/' + vi.channel;
-	    } else if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      var sep = this.seperateId(vi.id);
-	      url = 'https://twitch.tv/videos/' + sep.id;
-	      if (params.start) {
-	        params.t = params.start + 's';
-	        delete params.start;
-	      }
-	    } else if (vi.mediaType === this.mediaTypes.CLIP && vi.id) {
-	      if (vi.channel) {
-	        url = 'https://www.twitch.tv/' + vi.channel + '/clip/' + vi.id;
-	      } else {
-	        url = 'https://clips.twitch.tv/' + vi.id;
-	      }
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Twitch.prototype.createEmbedUrl = function (vi, params) {
-	    var url = 'https://player.twitch.tv/';
-	    if (vi.mediaType === this.mediaTypes.STREAM && vi.channel) {
-	      params.channel = vi.channel;
-	    } else if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      params.video = vi.id;
-	      if (params.start) {
-	        params.t = params.start + 's';
-	        delete params.start;
-	      }
-	    } else if (vi.mediaType === this.mediaTypes.CLIP && vi.id) {
-	      url = 'https://clips.twitch.tv/embed';
-	      params.clip = vi.id;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new Twitch());
-	  return twitch;
-	}
-
-	/**
-	 * Vimeo provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Video URLs: vimeo.com/ID or vimeopro.com/...
-	 * - Channels: vimeo.com/channels/NAME/ID
-	 * - Albums: vimeo.com/album/ID/video/ID
-	 * - Groups: vimeo.com/groups/NAME/videos/ID
-	 * - Showcases: vimeo.com/showcase/ID/video/ID
-	 * - Private videos with hash tokens
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Simple video
-	 * provider.parse('https://vimeo.com/96063277')
-	 * // Returns: { id: '96063277', mediaType: 'video', provider: 'vimeo' }
-	 * 
-	 * @example
-	 * // Video with start time and hash
-	 * provider.parse('https://vimeo.com/96063277/abc123?t=1m30s')
-	 * // Returns: { id: '96063277', mediaType: 'video', params: { start: 90, hash: 'abc123' } }
-	 */
-	var vimeo;
-	var hasRequiredVimeo;
-	function requireVimeo() {
-	  if (hasRequiredVimeo) return vimeo;
-	  hasRequiredVimeo = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams,
-	    getTime = _require$$.getTime;
-	  function Vimeo() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'vimeo';
-
-	    /** @type {string[]} Alternative domain names */
-	    this.alternatives = ['vimeopro'];
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  vimeo = Vimeo;
-
-	  /**
-	   * Parse video ID from Vimeo URL
-	   * @param {string} url - Vimeo URL
-	   * @returns {string|undefined} Video ID or undefined
-	   * @private
-	   */
-	  Vimeo.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:\/showcase\/\d+)?(?:\/(?:channels\/[\w]+|(?:(?:album\/\d+|groups\/[\w]+)\/)?videos?))?\/(\d+)/i);
-	    return match ? match[1] : undefined;
-	  };
-
-	  /**
-	   * Parse hash token for private videos
-	   * @param {string} url - Vimeo URL
-	   * @returns {string|undefined} Hash token or undefined
-	   * @private
-	   */
-	  Vimeo.prototype.parseHash = function (url) {
-	    var match = url.match(/\/\d+\/(\w+)$/i);
-	    return match ? match[1] : undefined;
-	  };
-
-	  /**
-	   * Extract and normalize parameters from query string
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Record<string, string>} Normalized parameters
-	   * @private
-	   */
-	  Vimeo.prototype.parseParameters = function (params) {
-	    if (params.t) {
-	      params.start = getTime(params.t);
-	      delete params.t;
-	    }
-	    if (params.h) {
-	      params.hash = params.h;
-	      delete params.h;
-	    }
-	    return params;
-	  };
-
-	  /**
-	   * Parse Vimeo URL to extract video information
-	   * @param {string} url - Vimeo URL
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Object|undefined} Video information (id, mediaType, params, etc) or undefined
-	   */
-	  Vimeo.prototype.parse = function (url, params) {
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      params: this.parseParameters(params),
-	      id: this.parseUrl(url)
-	    };
-	    var hash = this.parseHash(url, params);
-	    if (hash) {
-	      result.params.hash = hash;
-	    }
-	    return result.id ? result : undefined;
-	  };
-	  Vimeo.prototype.createUrl = function (baseUrl, vi, params, type) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = baseUrl + vi.id;
-	    var startTime = params.start;
-	    delete params.start;
-	    if (params.hash) {
-	      if (type === 'embed') {
-	        params.h = params.hash;
-	      } else if (type === 'long') {
-	        url += '/' + params.hash;
-	      }
-	      delete params.hash;
-	    }
-	    url += combineParams(params);
-	    if (startTime) {
-	      url += '#t=' + startTime;
-	    }
-	    return url;
-	  };
-	  Vimeo.prototype.createLongUrl = function (vi, params) {
-	    return this.createUrl('https://vimeo.com/', vi, params, 'long');
-	  };
-	  Vimeo.prototype.createEmbedUrl = function (vi, params) {
-	    return this.createUrl('//player.vimeo.com/video/', vi, params, 'embed');
-	  };
-	  requireBase().bind(new Vimeo());
-	  return vimeo;
-	}
-
-	/**
-	 * Wistia provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Videos: wistia.com/medias/ID or home.wistia.com/medias/ID
-	 * - With optional start times
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Wistia video
-	 * provider.parse('https://home.wistia.com/medias/abc123def')
-	 * // Returns: { id: 'abc123def', mediaType: 'video', provider: 'wistia' }
-	 */
-	var wistia;
-	var hasRequiredWistia;
-	function requireWistia() {
-	  if (hasRequiredWistia) return wistia;
-	  hasRequiredWistia = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams,
-	    getTime = _require$$.getTime;
-	  function Wistia() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'wistia';
-
-	    /** @type {string[]} Alternative domain names */
-	    this.alternatives = [];
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl,
-	      embedjsonp: this.createEmbedJsonpUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video',
-	      EMBEDVIDEO: 'embedvideo'
-	    };
-	  }
-	  wistia = Wistia;
-	  Wistia.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:(?:medias|iframe)\/|wvideo=)([\w-]+)/);
-	    return match ? match[1] : undefined;
-	  };
-	  Wistia.prototype.parseChannel = function (url) {
-	    var match = url.match(/(?:(?:https?:)?\/\/)?([^.]*)\.wistia\./);
-	    var channel = match ? match[1] : undefined;
-	    if (channel === 'fast' || channel === 'content') {
-	      return undefined;
-	    }
-	    return channel;
-	  };
-	  Wistia.prototype.parseParameters = function (params, result) {
-	    if (params.wtime) {
-	      params.start = getTime(params.wtime);
-	      delete params.wtime;
-	    }
-	    if (params.wvideo === result.id) {
-	      delete params.wvideo;
-	    }
-	    return params;
-	  };
-	  Wistia.prototype.parseMediaType = function (result) {
-	    if (result.id && result.channel) {
-	      return this.mediaTypes.VIDEO;
-	    } else if (result.id) {
-	      delete result.channel;
-	      return this.mediaTypes.EMBEDVIDEO;
-	    } else {
-	      return undefined;
-	    }
-	  };
-	  Wistia.prototype.parse = function (url, params) {
-	    var result = {
-	      id: this.parseUrl(url),
-	      channel: this.parseChannel(url)
-	    };
-	    result.params = this.parseParameters(params, result);
-	    result.mediaType = this.parseMediaType(result);
-	    if (!result.id) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  Wistia.prototype.createUrl = function (vi, params, url) {
-	    if (params.start) {
-	      params.wtime = params.start;
-	      delete params.start;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Wistia.prototype.createLongUrl = function (vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = 'https://' + vi.channel + '.wistia.com/medias/' + vi.id;
-	    return this.createUrl(vi, params, url);
-	  };
-	  Wistia.prototype.createEmbedUrl = function (vi, params) {
-	    if (!vi.id || !(vi.mediaType === this.mediaTypes.VIDEO || vi.mediaType === this.mediaTypes.EMBEDVIDEO)) {
-	      return undefined;
-	    }
-	    var url = 'https://fast.wistia.com/embed/iframe/' + vi.id;
-	    return this.createUrl(vi, params, url);
-	  };
-	  Wistia.prototype.createEmbedJsonpUrl = function (vi) {
-	    if (!vi.id || !(vi.mediaType === this.mediaTypes.VIDEO || vi.mediaType === this.mediaTypes.EMBEDVIDEO)) {
-	      return undefined;
-	    }
-	    return 'https://fast.wistia.com/embed/medias/' + vi.id + '.jsonp';
-	  };
-	  requireBase().bind(new Wistia());
-	  return wistia;
-	}
-
-	/**
-	 * Youku provider plugin
-	 * Supports parsing and URL generation for Youku videos
-	 * @constructor
-	 */
-	var youku;
-	var hasRequiredYouku;
-	function requireYouku() {
-	  if (hasRequiredYouku) return youku;
-	  hasRequiredYouku = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function Youku() {
-	    this.provider = 'youku';
-	    this.defaultFormat = 'long';
-	    this.formats = {
-	      embed: this.createEmbedUrl,
-	      "long": this.createLongUrl,
-	      flash: this.createFlashUrl,
-	      "static": this.createStaticUrl
-	    };
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  youku = Youku;
-	  Youku.prototype.parseUrl = function (url) {
-	    var match = url.match(/(?:(?:embed|sid)\/|v_show\/id_|VideoIDS=)([a-zA-Z0-9]+)/);
-	    return match ? match[1] : undefined;
-	  };
-	  Youku.prototype.parseParameters = function (params) {
-	    if (params.VideoIDS) {
-	      delete params.VideoIDS;
-	    }
-	    return params;
-	  };
-	  Youku.prototype.parse = function (url, params) {
-	    var _this = this;
-	    var result = {
-	      mediaType: this.mediaTypes.VIDEO,
-	      id: _this.parseUrl(url),
-	      params: _this.parseParameters(params)
-	    };
-	    if (!result.id) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  Youku.prototype.createUrl = function (baseUrl, vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = baseUrl + vi.id;
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Youku.prototype.createEmbedUrl = function (vi, params) {
-	    return this.createUrl('http://player.youku.com/embed/', vi, params);
-	  };
-	  Youku.prototype.createLongUrl = function (vi, params) {
-	    return this.createUrl('http://v.youku.com/v_show/id_', vi, params);
-	  };
-	  Youku.prototype.createStaticUrl = function (vi, params) {
-	    return this.createUrl('http://static.youku.com/v1.0.0638/v/swf/loader.swf?VideoIDS=', vi, params);
-	  };
-	  Youku.prototype.createFlashUrl = function (vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = 'http://player.youku.com/player.php/sid/' + vi.id + '/v.swf';
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new Youku());
-	  return youku;
-	}
-
-	/**
-	 * YouTube provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Video URLs: youtube.com/watch?v=ID or youtu.be/ID
-	 * - Playlists: youtube.com/playlist?list=ID
-	 * - Channels: youtube.com/channel/ID or youtube.com/c/NAME
-	 * - Embedded videos: youtube.com/embed/ID
-	 * - Images: various thumbnail formats
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Video with start time
-	 * provider.parse('https://www.youtube.com/watch?v=aqz-KE-bpKQ&t=1m30s')
-	 * // Returns: { id: 'aqz-KE-bpKQ', mediaType: 'video', provider: 'youtube', params: { start: 90 } }
-	 * 
-	 * @example
-	 * // Playlist
-	 * provider.parse('https://youtube.com/playlist?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf')
-	 * // Returns: { id: 'PLrAXt...', mediaType: 'playlist', provider: 'youtube' }
-	 */
-	var youtube;
-	var hasRequiredYoutube;
-	function requireYoutube() {
-	  if (hasRequiredYoutube) return youtube;
-	  hasRequiredYoutube = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams,
-	    getTime = _require$$.getTime;
-	  function YouTube() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'youtube';
-
-	    /** @type {string[]} Alternative domain names */
-	    this.alternatives = ['youtu', 'ytimg'];
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "short": this.createShortUrl,
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl,
-	      shortImage: this.createShortImageUrl,
-	      longImage: this.createLongImageUrl
-	    };
-
-	    /** @type {Object<string, string>} Available image quality levels */
-	    this.imageQualities = {
-	      '0': '0',
-	      '1': '1',
-	      '2': '2',
-	      '3': '3',
-	      DEFAULT: 'default',
-	      HQDEFAULT: 'hqdefault',
-	      SDDEFAULT: 'sddefault',
-	      MQDEFAULT: 'mqdefault',
-	      MAXRESDEFAULT: 'maxresdefault'
-	    };
-
-	    /** @type {string} Default image quality */
-	    this.defaultImageQuality = this.imageQualities.HQDEFAULT;
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video',
-	      PLAYLIST: 'playlist',
-	      SHARE: 'share',
-	      CHANNEL: 'channel'
-	    };
-	  }
-	  youtube = YouTube;
-
-	  /**
-	   * Parse video ID from YouTube URL
-	   * @param {string} url - YouTube URL
-	   * @returns {string|undefined} 11-character video ID or undefined
-	   * @private
-	   */
-	  YouTube.prototype.parseVideoUrl = function (url) {
-	    var match = url.match(/(?:(?:v|vi|be|videos|embed)\/(?!videoseries)|(?:v|ci)=)([\w-]{11})/i);
-	    return match ? match[1] : undefined;
-	  };
-
-	  /**
-	   * Parse channel information from YouTube URL
-	   * @param {string} url - YouTube URL
-	   * @returns {Object|undefined} Channel info with id/name and mediaType, or undefined
-	   * @private
-	   */
-	  YouTube.prototype.parseChannelUrl = function (url) {
-	    // Match an opaque channel ID
-	    var match = url.match(/\/channel\/([\w-]+)/);
-	    if (match) {
-	      return {
-	        id: match[1],
-	        mediaType: this.mediaTypes.CHANNEL
-	      };
-	    }
-
-	    // Match a vanity channel name or a user name. User urls are deprecated and
-	    // currently redirect to the channel of that same name.
-	    match = url.match(/\/(?:c|user)\/([\w-]+)/);
-	    if (match) {
-	      return {
-	        name: match[1],
-	        mediaType: this.mediaTypes.CHANNEL
-	      };
-	    }
-	  };
-
-	  /**
-	   * Extract and normalize parameters from query string
-	   * @param {Record<string, string>} params - Query parameters
-	   * @param {Object} result - Parsing result accumulator
-	   * @returns {Record<string, string>} Normalized parameters
-	   * @private
-	   */
-	  YouTube.prototype.parseParameters = function (params, result) {
-	    if (params.start || params.t) {
-	      params.start = getTime(params.start || params.t);
-	      delete params.t;
-	    }
-	    if (params.v === result.id) {
-	      delete params.v;
-	    }
-	    if (params.list === result.id) {
-	      delete params.list;
-	    }
-	    return params;
-	  };
-
-	  /**
-	   * Determine media type and normalize result
-	   * @param {Object} result - Parsing result accumulator
-	   * @returns {Object|undefined} Parsed result with mediaType set
-	   * @private
-	   */
-	  YouTube.prototype.parseMediaType = function (result) {
-	    if (result.params.list) {
-	      result.list = result.params.list;
-	      delete result.params.list;
-	    }
-	    if (result.id && !result.params.ci) {
-	      result.mediaType = this.mediaTypes.VIDEO;
-	    } else if (result.list) {
-	      delete result.id;
-	      result.mediaType = this.mediaTypes.PLAYLIST;
-	    } else if (result.params.ci) {
-	      delete result.params.ci;
-	      result.mediaType = this.mediaTypes.SHARE;
-	    } else {
-	      return undefined;
-	    }
-	    return result;
-	  };
-
-	  /**
-	   * Parse YouTube URL to extract video information
-	   * @param {string} url - YouTube URL
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Object|undefined} Video information (id, mediaType, params, etc) or undefined
-	   */
-	  YouTube.prototype.parse = function (url, params) {
-	    var channelResult = this.parseChannelUrl(url);
-	    if (channelResult) {
-	      return channelResult;
-	    } else {
-	      var result = {
-	        params: params,
-	        id: this.parseVideoUrl(url)
-	      };
-	      result.params = this.parseParameters(params, result);
-	      result = this.parseMediaType(result);
-	      return result;
-	    }
-	  };
-	  YouTube.prototype.createShortUrl = function (vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = 'https://youtu.be/' + vi.id;
-	    if (params.start) {
-	      url += '#t=' + params.start;
-	    }
-	    return url;
-	  };
-	  YouTube.prototype.createLongUrl = function (vi, params) {
-	    var url = '';
-	    var startTime = params.start;
-	    delete params.start;
-	    if (vi.mediaType === this.mediaTypes.CHANNEL) {
-	      if (vi.id) {
-	        url += 'https://www.youtube.com/channel/' + vi.id;
-	      } else if (vi.name) {
-	        url += 'https://www.youtube.com/c/' + vi.name;
-	      } else {
-	        return undefined;
-	      }
-	    } else if (vi.mediaType === this.mediaTypes.PLAYLIST && vi.list) {
-	      params.feature = 'share';
-	      url += 'https://www.youtube.com/playlist';
-	    } else if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      params.v = vi.id;
-	      url += 'https://www.youtube.com/watch';
-	    } else if (vi.mediaType === this.mediaTypes.SHARE && vi.id) {
-	      params.ci = vi.id;
-	      url += 'https://www.youtube.com/shared';
-	    } else {
-	      return undefined;
-	    }
-	    if (vi.list) {
-	      params.list = vi.list;
-	    }
-	    url += combineParams(params);
-	    if (vi.mediaType !== this.mediaTypes.PLAYLIST && startTime) {
-	      url += '#t=' + startTime;
-	    }
-	    return url;
-	  };
-	  YouTube.prototype.createEmbedUrl = function (vi, params) {
-	    var url = 'https://www.youtube.com/embed';
-	    if (vi.mediaType === this.mediaTypes.PLAYLIST && vi.list) {
-	      params.listType = 'playlist';
-	    } else if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      url += '/' + vi.id;
-	      //loop hack
-	      if (params.loop === '1') {
-	        params.playlist = vi.id;
-	      }
-	    } else {
-	      return undefined;
-	    }
-	    if (vi.list) {
-	      params.list = vi.list;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  YouTube.prototype.createImageUrl = function (baseUrl, vi, params) {
-	    if (!vi.id || vi.mediaType !== this.mediaTypes.VIDEO) {
-	      return undefined;
-	    }
-	    var url = baseUrl + vi.id + '/';
-	    var quality = params.imageQuality || this.defaultImageQuality;
-	    return url + quality + '.jpg';
-	  };
-	  YouTube.prototype.createShortImageUrl = function (vi, params) {
-	    return this.createImageUrl('https://i.ytimg.com/vi/', vi, params);
-	  };
-	  YouTube.prototype.createLongImageUrl = function (vi, params) {
-	    return this.createImageUrl('https://img.youtube.com/vi/', vi, params);
-	  };
-	  requireBase().bind(new YouTube());
-	  return youtube;
-	}
-
-	/**
-	 * SoundCloud provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Tracks: soundcloud.com/USER/TRACK
-	 * - Playlists: soundcloud.com/USER/sets/PLAYLIST
-	 * - API tracks/playlists via oEmbed
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Track
-	 * provider.parse('https://soundcloud.com/artist/song-name')
-	 * // Returns: { id: 'TRACK_ID', mediaType: 'track', provider: 'soundcloud' }
-	 * 
-	 * @example
-	 * // Playlist
-	 * provider.parse('https://soundcloud.com/artist/sets/collection-name')
-	 * // Returns: { id: 'PLAYLIST_ID', mediaType: 'playlist', provider: 'soundcloud' }
-	 */
-	var soundcloud;
-	var hasRequiredSoundcloud;
-	function requireSoundcloud() {
-	  if (hasRequiredSoundcloud) return soundcloud;
-	  hasRequiredSoundcloud = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams,
-	    getTime = _require$$.getTime;
-	  function SoundCloud() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'soundcloud';
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      TRACK: 'track',
-	      PLAYLIST: 'playlist',
-	      APITRACK: 'apitrack',
-	      APIPLAYLIST: 'apiplaylist'
-	    };
-	  }
-	  soundcloud = SoundCloud;
-	  SoundCloud.prototype.parseUrl = function (url, result) {
-	    var match = url.match(/(?:m\.)?soundcloud\.com\/(?:([\w-]+)\/(sets\/)?)([\w-]+)/i);
-	    if (!match) {
-	      return result;
-	    }
-	    result.channel = match[1];
-	    if (match[1] === 'playlists' || match[2]) {
-	      //playlist
-	      result.list = match[3];
-	    } else {
-	      //track
-	      result.id = match[3];
-	    }
-	    return result;
-	  };
-	  SoundCloud.prototype.parseParameters = function (params) {
-	    if (params.t) {
-	      params.start = getTime(params.t);
-	      delete params.t;
-	    }
-	    return params;
-	  };
-	  SoundCloud.prototype.parseMediaType = function (result) {
-	    if (result.id) {
-	      if (result.channel === 'tracks') {
-	        delete result.channel;
-	        delete result.params.url;
-	        result.mediaType = this.mediaTypes.APITRACK;
-	      } else {
-	        result.mediaType = this.mediaTypes.TRACK;
-	      }
-	    }
-	    if (result.list) {
-	      if (result.channel === 'playlists') {
-	        delete result.channel;
-	        delete result.params.url;
-	        result.mediaType = this.mediaTypes.APIPLAYLIST;
-	      } else {
-	        result.mediaType = this.mediaTypes.PLAYLIST;
-	      }
-	    }
-	    return result;
-	  };
-	  SoundCloud.prototype.parse = function (url, params) {
-	    var result = {};
-	    result = this.parseUrl(url, result);
-	    result.params = this.parseParameters(params);
-	    result = this.parseMediaType(result);
-	    if (!result.id && !result.list) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  SoundCloud.prototype.createLongUrl = function (vi, params) {
-	    var url = '';
-	    var startTime = params.start;
-	    delete params.start;
-	    if (vi.mediaType === this.mediaTypes.TRACK && vi.id && vi.channel) {
-	      url = 'https://soundcloud.com/' + vi.channel + '/' + vi.id;
-	    } else if (vi.mediaType === this.mediaTypes.PLAYLIST && vi.list && vi.channel) {
-	      url = 'https://soundcloud.com/' + vi.channel + '/sets/' + vi.list;
-	    } else if (vi.mediaType === this.mediaTypes.APITRACK && vi.id) {
-	      url = 'https://api.soundcloud.com/tracks/' + vi.id;
-	    } else if (vi.mediaType === this.mediaTypes.APIPLAYLIST && vi.list) {
-	      url = 'https://api.soundcloud.com/playlists/' + vi.list;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    if (startTime) {
-	      url += '#t=' + startTime;
-	    }
-	    return url;
-	  };
-	  SoundCloud.prototype.createEmbedUrl = function (vi, params) {
-	    var url = 'https://w.soundcloud.com/player/';
-	    delete params.start;
-	    if (vi.mediaType === this.mediaTypes.APITRACK && vi.id) {
-	      params.url = 'https%3A//api.soundcloud.com/tracks/' + vi.id;
-	    } else if (vi.mediaType === this.mediaTypes.APIPLAYLIST && vi.list) {
-	      params.url = 'https%3A//api.soundcloud.com/playlists/' + vi.list;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new SoundCloud());
-	  return soundcloud;
-	}
-
-	/**
-	 * TeacherTube provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Videos: teachertube.com/video/ID
-	 * - Audio, documents, channels, collections, and groups
-	 * 
-	 * @constructor
-	 */
-	var teachertube;
-	var hasRequiredTeachertube;
-	function requireTeachertube() {
-	  if (hasRequiredTeachertube) return teachertube;
-	  hasRequiredTeachertube = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function TeacherTube() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'teachertube';
-
-	    /** @type {string[]} Alternative domain names */
-	    this.alternatives = [];
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video',
-	      AUDIO: 'audio',
-	      DOCUMENT: 'document',
-	      CHANNEL: 'channel',
-	      COLLECTION: 'collection',
-	      GROUP: 'group'
-	    };
-	  }
-	  teachertube = TeacherTube;
-	  TeacherTube.prototype.parse = function (url, params) {
-	    var result = {};
-	    result.list = this.parsePlaylist(params);
-	    result.params = params;
-	    var match = url.match(/\/(audio|video|document|user\/channel|collection|group)\/(?:[\w-]+-)?(\w+)/);
-	    if (!match) {
-	      return undefined;
-	    }
-	    result.mediaType = this.parseMediaType(match[1]);
-	    result.id = match[2];
-	    return result;
-	  };
-	  TeacherTube.prototype.parsePlaylist = function (params) {
-	    if (params['playlist-id']) {
-	      var list = params['playlist-id'];
-	      delete params['playlist-id'];
-	      return list;
-	    }
-	    return undefined;
-	  };
-	  TeacherTube.prototype.parseMediaType = function (mediaTypeMatch) {
-	    switch (mediaTypeMatch) {
-	      case 'audio':
-	        return this.mediaTypes.AUDIO;
-	      case 'video':
-	        return this.mediaTypes.VIDEO;
-	      case 'document':
-	        return this.mediaTypes.DOCUMENT;
-	      case 'user/channel':
-	        return this.mediaTypes.CHANNEL;
-	      case 'collection':
-	        return this.mediaTypes.COLLECTION;
-	      case 'group':
-	        return this.mediaTypes.GROUP;
-	    }
-	  };
-	  TeacherTube.prototype.createLongUrl = function (vi, params) {
-	    if (!vi.id) {
-	      return undefined;
-	    }
-	    var url = 'https://www.teachertube.com/';
-	    if (vi.list) {
-	      params['playlist-id'] = vi.list;
-	    }
-	    if (vi.mediaType === this.mediaTypes.CHANNEL) {
-	      url += 'user/channel/';
-	    } else {
-	      url += vi.mediaType + '/';
-	    }
-	    url += vi.id;
-	    url += combineParams(params);
-	    return url;
-	  };
-	  TeacherTube.prototype.createEmbedUrl = function (vi, params) {
-	    if (!vi.id) {
-	      return undefined;
-	    }
-	    var url = 'https://www.teachertube.com/embed/';
-	    if (vi.mediaType === this.mediaTypes.VIDEO || vi.mediaType === this.mediaTypes.AUDIO) {
-	      url += vi.mediaType + '/' + vi.id;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new TeacherTube());
-	  return teachertube;
-	}
-
-	/**
-	 * TikTok provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Videos: tiktok.com/@USER/video/ID
-	 * - Short URLs: vm.tiktok.com/ID or vt.tiktok.com/ID
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // TikTok video
-	 * provider.parse('https://www.tiktok.com/@username/video/1234567890')
-	 * // Returns: { id: '1234567890', mediaType: 'video', provider: 'tiktok' }
-	 */
-	var tiktok;
-	var hasRequiredTiktok;
-	function requireTiktok() {
-	  if (hasRequiredTiktok) return tiktok;
-	  hasRequiredTiktok = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function TikTok() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'tiktok';
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  tiktok = TikTok;
-
-	  /**
-	   * Parse TikTok URL to extract video information
-	   * @param {string} url - TikTok URL
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Object|undefined} Video information (id, mediaType, params) or undefined
-	   */
-	  TikTok.prototype.parse = function (url, params) {
-	    var result = {
-	      params: params,
-	      mediaType: this.mediaTypes.VIDEO
-	    };
-	    var match = url.match(/@([^/]+)\/video\/(\d{19})/);
-	    if (!match) {
-	      return;
-	    }
-	    result.channel = match[1];
-	    result.id = match[2];
-	    return result;
-	  };
-	  TikTok.prototype.createLongUrl = function (vi, params) {
-	    var url = '';
-	    if (vi.mediaType === this.mediaTypes.VIDEO && vi.id && vi.channel) {
-	      url += "https://www.tiktok.com/@".concat(vi.channel, "/video/").concat(vi.id);
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new TikTok());
-	  return tiktok;
-	}
-
-	/**
-	 * TED provider plugin
-	 * Supports parsing and URL generation for TED talks and playlists
-	 * @constructor
-	 */
-	var ted;
-	var hasRequiredTed;
-	function requireTed() {
-	  if (hasRequiredTed) return ted;
-	  hasRequiredTed = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function Ted() {
-	    this.provider = 'ted';
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      embed: this.createEmbedUrl
-	    };
-	    this.mediaTypes = {
-	      VIDEO: 'video',
-	      PLAYLIST: 'playlist'
-	    };
-	  }
-	  ted = Ted;
-	  Ted.prototype.parseUrl = function (url, result) {
-	    var match = url.match(/\/(talks|playlists\/(\d+))\/([\w-]+)/i);
-	    var channel = match ? match[1] : undefined;
-	    if (!channel) {
-	      return result;
-	    }
-	    result.channel = channel.split('/')[0];
-	    result.id = match[3];
-	    if (result.channel === 'playlists') {
-	      result.list = match[2];
-	    }
-	    return result;
-	  };
-	  Ted.prototype.parseMediaType = function (result) {
-	    if (result.id && result.channel === 'playlists') {
-	      delete result.channel;
-	      result.mediaType = this.mediaTypes.PLAYLIST;
-	    }
-	    if (result.id && result.channel === 'talks') {
-	      delete result.channel;
-	      result.mediaType = this.mediaTypes.VIDEO;
-	    }
-	    return result;
-	  };
-	  Ted.prototype.parse = function (url, params) {
-	    var result = {
-	      params: params
-	    };
-	    result = this.parseUrl(url, result);
-	    result = this.parseMediaType(result);
-	    if (!result.id) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  Ted.prototype.createLongUrl = function (vi, params) {
-	    var url = '';
-	    if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      url += 'https://ted.com/talks/' + vi.id;
-	    } else if (vi.mediaType === this.mediaTypes.PLAYLIST && vi.id) {
-	      url += 'https://ted.com/playlists/' + vi.list + '/' + vi.id;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Ted.prototype.createEmbedUrl = function (vi, params) {
-	    var url = 'https://embed.ted.com/';
-	    if (vi.mediaType === this.mediaTypes.PLAYLIST && vi.id) {
-	      url += 'playlists/' + vi.list + '/' + vi.id;
-	    } else if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      url += 'talks/' + vi.id;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new Ted());
-	  return ted;
-	}
-
-	/**
-	 * Facebook provider plugin
-	 * 
-	 * Supports parsing and URL generation for:
-	 * - Videos: facebook.com/watch/?v=ID or fb.watch/ID
-	 * - Page videos: facebook.com/PAGE/videos/ID
-	 * 
-	 * @constructor
-	 * 
-	 * @example
-	 * // Facebook video
-	 * provider.parse('https://www.facebook.com/watch/?v=1234567890')
-	 * // Returns: { id: '1234567890', mediaType: 'video', provider: 'facebook' }
-	 */
-	var facebook;
-	var hasRequiredFacebook;
-	function requireFacebook() {
-	  if (hasRequiredFacebook) return facebook;
-	  hasRequiredFacebook = 1;
-	  var _require$$ = requireUtil(),
-	    combineParams = _require$$.combineParams;
-	  function Facebook() {
-	    /** @type {string} Provider identifier */
-	    this.provider = 'facebook';
-
-	    /** @type {string[]} Alternative domain names */
-	    this.alternatives = [];
-
-	    /** @type {string} Default URL format */
-	    this.defaultFormat = 'long';
-
-	    /** @type {Object<string, Function>} Available URL format handlers */
-	    this.formats = {
-	      "long": this.createLongUrl,
-	      watch: this.createWatchUrl
-	    };
-
-	    /** @type {Object<string, string>} Media type constants */
-	    this.mediaTypes = {
-	      VIDEO: 'video'
-	    };
-	  }
-	  facebook = Facebook;
-
-	  /**
-	   * Parse Facebook URL to extract video information
-	   * @param {string} url - Facebook URL
-	   * @param {Record<string, string>} params - Query parameters
-	   * @returns {Object|undefined} Video information (id, mediaType, params) or undefined
-	   */
-	  Facebook.prototype.parse = function (url, params) {
-	    var result = {
-	      params: params,
-	      mediaType: this.mediaTypes.VIDEO
-	    };
-	    var match = url.match(/(?:\/(\d+))?\/videos(?:\/.*?)?\/(\d+)/i);
-	    if (match) {
-	      if (match[1]) {
-	        result.pageId = match[1];
-	      }
-	      result.id = match[2];
-	    }
-	    if (params.v && !result.id) {
-	      result.id = params.v;
-	      delete params.v;
-	      result.params = params;
-	    }
-	    if (!result.id) {
-	      return undefined;
-	    }
-	    return result;
-	  };
-	  Facebook.prototype.createWatchUrl = function (vi, params) {
-	    var url = 'https://facebook.com/watch/';
-	    if (vi.mediaType !== this.mediaTypes.VIDEO || !vi.id) {
-	      return undefined;
-	    }
-	    params = {
-	      v: vi.id
-	    };
-	    url += combineParams(params);
-	    return url;
-	  };
-	  Facebook.prototype.createLongUrl = function (vi, params) {
-	    var url = 'https://facebook.com/';
-	    if (vi.pageId) {
-	      url += vi.pageId;
-	    } else {
-	      return undefined;
-	    }
-	    if (vi.mediaType === this.mediaTypes.VIDEO && vi.id) {
-	      url += '/videos/' + vi.id;
-	    } else {
-	      return undefined;
-	    }
-	    url += combineParams(params);
-	    return url;
-	  };
-	  requireBase().bind(new Facebook());
-	  return facebook;
 	}
 
 	/**
@@ -1916,6 +661,8 @@
 	 * A parser to extract provider, video ID, media type, and other metadata 
 	 * from video URLs (YouTube, Vimeo, Dailymotion, Twitch, SoundCloud, TikTok, etc.)
 	 * and reconstruct URLs in various formats.
+	 * 
+	 * Providers are automatically loaded and registered when the module is required.
 	 * 
 	 * @type {UrlParser}
 	 * 
@@ -1940,23 +687,7 @@
 	function requireLib() {
 	  if (hasRequiredLib) return lib;
 	  hasRequiredLib = 1;
-	  var parser = requireBase();
-	  requireAllocine();
-	  requireCanalplus();
-	  requireCoub();
-	  requireDailymotion();
-	  requireLoom();
-	  requireTwitch();
-	  requireVimeo();
-	  requireWistia();
-	  requireYouku();
-	  requireYoutube();
-	  requireSoundcloud();
-	  requireTeachertube();
-	  requireTiktok();
-	  requireTed();
-	  requireFacebook();
-	  lib = parser;
+	  lib = requireBase();
 	  return lib;
 	}
 
