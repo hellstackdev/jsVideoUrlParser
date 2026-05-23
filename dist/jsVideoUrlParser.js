@@ -301,6 +301,11 @@
 	  return base;
 	}
 
+	/**
+	 * AlloCine provider plugin
+	 * Supports parsing and URL generation for AlloCine movies and trailers
+	 * @constructor
+	 */
 	var allocine;
 	var hasRequiredAllocine;
 	function requireAllocine() {
@@ -339,6 +344,11 @@
 	  return allocine;
 	}
 
+	/**
+	 * CanalPlus provider plugin
+	 * Supports parsing and URL generation for CanalPlus videos
+	 * @constructor
+	 */
 	var canalplus;
 	var hasRequiredCanalplus;
 	function requireCanalplus() {
@@ -386,6 +396,11 @@
 	  return canalplus;
 	}
 
+	/**
+	 * Coub provider plugin
+	 * Supports parsing and URL generation for Coub videos
+	 * @constructor
+	 */
 	var coub;
 	var hasRequiredCoub;
 	function requireCoub() {
@@ -438,6 +453,20 @@
 	  return coub;
 	}
 
+	/**
+	 * Dailymotion provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Videos: dailymotion.com/video/ID or dai.ly/ID
+	 * - With start times and parameters
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Simple video
+	 * provider.parse('https://dailymotion.com/video/x12345ab')
+	 * // Returns: { id: 'x12345ab', mediaType: 'video', provider: 'dailymotion' }
+	 */
 	var dailymotion;
 	var hasRequiredDailymotion;
 	function requireDailymotion() {
@@ -447,23 +476,46 @@
 	    combineParams = _require$$.combineParams,
 	    getTime = _require$$.getTime;
 	  function Dailymotion() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'dailymotion';
+
+	    /** @type {string[]} Alternative domain names */
 	    this.alternatives = ['dai'];
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "short": this.createShortUrl,
 	      "long": this.createLongUrl,
 	      embed: this.createEmbedUrl,
 	      image: this.createImageUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video'
 	    };
 	  }
 	  dailymotion = Dailymotion;
+
+	  /**
+	   * Extract and normalize parameters from query string
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Record<string, string>} Normalized parameters
+	   * @private
+	   */
 	  Dailymotion.prototype.parseParameters = function (params) {
 	    return this.parseTime(params);
 	  };
+
+	  /**
+	   * Parse time parameter to seconds
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Record<string, string>} Parameters with parsed time
+	   * @private
+	   */
 	  Dailymotion.prototype.parseTime = function (params) {
 	    if (params.start) {
 	      params.start = getTime(params.start);
@@ -506,6 +558,11 @@
 	  return dailymotion;
 	}
 
+	/**
+	 * Loom provider plugin
+	 * Supports parsing and URL generation for Loom recordings
+	 * @constructor
+	 */
 	var loom;
 	var hasRequiredLoom;
 	function requireLoom() {
@@ -555,6 +612,26 @@
 	  return loom;
 	}
 
+	/**
+	 * Twitch provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Live streams: twitch.tv/CHANNEL
+	 * - VODs (videos): twitch.tv/videos/ID or twitch.tv/CHANNEL/video/ID
+	 * - Clips: twitch.tv/CHANNEL/clip/ID or clips.twitch.tv/ID
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Live stream
+	 * provider.parse('https://twitch.tv/monstercat')
+	 * // Returns: { id: 'monstercat', mediaType: 'stream', provider: 'twitch' }
+	 * 
+	 * @example
+	 * // Video with start time
+	 * provider.parse('https://twitch.tv/videos/1234567890?t=1h30m')
+	 * // Returns: { id: 'v1234567890', mediaType: 'video', params: { start: 5400 } }
+	 */
 	var twitch;
 	var hasRequiredTwitch;
 	function requireTwitch() {
@@ -564,12 +641,19 @@
 	    combineParams = _require$$.combineParams,
 	    getTime = _require$$.getTime;
 	  function Twitch() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'twitch';
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl,
 	      embed: this.createEmbedUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video',
 	      STREAM: 'stream',
@@ -577,12 +661,27 @@
 	    };
 	  }
 	  twitch = Twitch;
+
+	  /**
+	   * Separate media type prefix from ID
+	   * @param {string} id - ID with prefix (v=video, c=clip, etc)
+	   * @returns {Object} Object with {pre, id} - prefix and unprefixed ID
+	   * @private
+	   */
 	  Twitch.prototype.seperateId = function (id) {
 	    return {
 	      pre: id[0],
 	      id: id.substr(1)
 	    };
 	  };
+
+	  /**
+	   * Parse channel information from Twitch URL
+	   * @param {Object} result - Parsing result accumulator
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Object} Result with channel set
+	   * @private
+	   */
 	  Twitch.prototype.parseChannel = function (result, params) {
 	    var channel = params.channel || params.utm_content || result.channel;
 	    delete params.utm_content;
@@ -694,6 +793,29 @@
 	  return twitch;
 	}
 
+	/**
+	 * Vimeo provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Video URLs: vimeo.com/ID or vimeopro.com/...
+	 * - Channels: vimeo.com/channels/NAME/ID
+	 * - Albums: vimeo.com/album/ID/video/ID
+	 * - Groups: vimeo.com/groups/NAME/videos/ID
+	 * - Showcases: vimeo.com/showcase/ID/video/ID
+	 * - Private videos with hash tokens
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Simple video
+	 * provider.parse('https://vimeo.com/96063277')
+	 * // Returns: { id: '96063277', mediaType: 'video', provider: 'vimeo' }
+	 * 
+	 * @example
+	 * // Video with start time and hash
+	 * provider.parse('https://vimeo.com/96063277/abc123?t=1m30s')
+	 * // Returns: { id: '96063277', mediaType: 'video', params: { start: 90, hash: 'abc123' } }
+	 */
 	var vimeo;
 	var hasRequiredVimeo;
 	function requireVimeo() {
@@ -703,26 +825,56 @@
 	    combineParams = _require$$.combineParams,
 	    getTime = _require$$.getTime;
 	  function Vimeo() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'vimeo';
+
+	    /** @type {string[]} Alternative domain names */
 	    this.alternatives = ['vimeopro'];
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl,
 	      embed: this.createEmbedUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video'
 	    };
 	  }
 	  vimeo = Vimeo;
+
+	  /**
+	   * Parse video ID from Vimeo URL
+	   * @param {string} url - Vimeo URL
+	   * @returns {string|undefined} Video ID or undefined
+	   * @private
+	   */
 	  Vimeo.prototype.parseUrl = function (url) {
 	    var match = url.match(/(?:\/showcase\/\d+)?(?:\/(?:channels\/[\w]+|(?:(?:album\/\d+|groups\/[\w]+)\/)?videos?))?\/(\d+)/i);
 	    return match ? match[1] : undefined;
 	  };
+
+	  /**
+	   * Parse hash token for private videos
+	   * @param {string} url - Vimeo URL
+	   * @returns {string|undefined} Hash token or undefined
+	   * @private
+	   */
 	  Vimeo.prototype.parseHash = function (url) {
 	    var match = url.match(/\/\d+\/(\w+)$/i);
 	    return match ? match[1] : undefined;
 	  };
+
+	  /**
+	   * Extract and normalize parameters from query string
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Record<string, string>} Normalized parameters
+	   * @private
+	   */
 	  Vimeo.prototype.parseParameters = function (params) {
 	    if (params.t) {
 	      params.start = getTime(params.t);
@@ -734,6 +886,13 @@
 	    }
 	    return params;
 	  };
+
+	  /**
+	   * Parse Vimeo URL to extract video information
+	   * @param {string} url - Vimeo URL
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Object|undefined} Video information (id, mediaType, params, etc) or undefined
+	   */
 	  Vimeo.prototype.parse = function (url, params) {
 	    var result = {
 	      mediaType: this.mediaTypes.VIDEO,
@@ -777,6 +936,20 @@
 	  return vimeo;
 	}
 
+	/**
+	 * Wistia provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Videos: wistia.com/medias/ID or home.wistia.com/medias/ID
+	 * - With optional start times
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Wistia video
+	 * provider.parse('https://home.wistia.com/medias/abc123def')
+	 * // Returns: { id: 'abc123def', mediaType: 'video', provider: 'wistia' }
+	 */
 	var wistia;
 	var hasRequiredWistia;
 	function requireWistia() {
@@ -786,14 +959,23 @@
 	    combineParams = _require$$.combineParams,
 	    getTime = _require$$.getTime;
 	  function Wistia() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'wistia';
+
+	    /** @type {string[]} Alternative domain names */
 	    this.alternatives = [];
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl,
 	      embed: this.createEmbedUrl,
 	      embedjsonp: this.createEmbedJsonpUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video',
 	      EMBEDVIDEO: 'embedvideo'
@@ -876,6 +1058,11 @@
 	  return wistia;
 	}
 
+	/**
+	 * Youku provider plugin
+	 * Supports parsing and URL generation for Youku videos
+	 * @constructor
+	 */
 	var youku;
 	var hasRequiredYouku;
 	function requireYouku() {
@@ -948,6 +1135,28 @@
 	  return youku;
 	}
 
+	/**
+	 * YouTube provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Video URLs: youtube.com/watch?v=ID or youtu.be/ID
+	 * - Playlists: youtube.com/playlist?list=ID
+	 * - Channels: youtube.com/channel/ID or youtube.com/c/NAME
+	 * - Embedded videos: youtube.com/embed/ID
+	 * - Images: various thumbnail formats
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Video with start time
+	 * provider.parse('https://www.youtube.com/watch?v=aqz-KE-bpKQ&t=1m30s')
+	 * // Returns: { id: 'aqz-KE-bpKQ', mediaType: 'video', provider: 'youtube', params: { start: 90 } }
+	 * 
+	 * @example
+	 * // Playlist
+	 * provider.parse('https://youtube.com/playlist?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf')
+	 * // Returns: { id: 'PLrAXt...', mediaType: 'playlist', provider: 'youtube' }
+	 */
 	var youtube;
 	var hasRequiredYoutube;
 	function requireYoutube() {
@@ -957,9 +1166,16 @@
 	    combineParams = _require$$.combineParams,
 	    getTime = _require$$.getTime;
 	  function YouTube() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'youtube';
+
+	    /** @type {string[]} Alternative domain names */
 	    this.alternatives = ['youtu', 'ytimg'];
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "short": this.createShortUrl,
 	      "long": this.createLongUrl,
@@ -967,6 +1183,8 @@
 	      shortImage: this.createShortImageUrl,
 	      longImage: this.createLongImageUrl
 	    };
+
+	    /** @type {Object<string, string>} Available image quality levels */
 	    this.imageQualities = {
 	      '0': '0',
 	      '1': '1',
@@ -978,7 +1196,11 @@
 	      MQDEFAULT: 'mqdefault',
 	      MAXRESDEFAULT: 'maxresdefault'
 	    };
+
+	    /** @type {string} Default image quality */
 	    this.defaultImageQuality = this.imageQualities.HQDEFAULT;
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video',
 	      PLAYLIST: 'playlist',
@@ -987,10 +1209,24 @@
 	    };
 	  }
 	  youtube = YouTube;
+
+	  /**
+	   * Parse video ID from YouTube URL
+	   * @param {string} url - YouTube URL
+	   * @returns {string|undefined} 11-character video ID or undefined
+	   * @private
+	   */
 	  YouTube.prototype.parseVideoUrl = function (url) {
 	    var match = url.match(/(?:(?:v|vi|be|videos|embed)\/(?!videoseries)|(?:v|ci)=)([\w-]{11})/i);
 	    return match ? match[1] : undefined;
 	  };
+
+	  /**
+	   * Parse channel information from YouTube URL
+	   * @param {string} url - YouTube URL
+	   * @returns {Object|undefined} Channel info with id/name and mediaType, or undefined
+	   * @private
+	   */
 	  YouTube.prototype.parseChannelUrl = function (url) {
 	    // Match an opaque channel ID
 	    var match = url.match(/\/channel\/([\w-]+)/);
@@ -1011,6 +1247,14 @@
 	      };
 	    }
 	  };
+
+	  /**
+	   * Extract and normalize parameters from query string
+	   * @param {Record<string, string>} params - Query parameters
+	   * @param {Object} result - Parsing result accumulator
+	   * @returns {Record<string, string>} Normalized parameters
+	   * @private
+	   */
 	  YouTube.prototype.parseParameters = function (params, result) {
 	    if (params.start || params.t) {
 	      params.start = getTime(params.start || params.t);
@@ -1024,6 +1268,13 @@
 	    }
 	    return params;
 	  };
+
+	  /**
+	   * Determine media type and normalize result
+	   * @param {Object} result - Parsing result accumulator
+	   * @returns {Object|undefined} Parsed result with mediaType set
+	   * @private
+	   */
 	  YouTube.prototype.parseMediaType = function (result) {
 	    if (result.params.list) {
 	      result.list = result.params.list;
@@ -1042,6 +1293,13 @@
 	    }
 	    return result;
 	  };
+
+	  /**
+	   * Parse YouTube URL to extract video information
+	   * @param {string} url - YouTube URL
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Object|undefined} Video information (id, mediaType, params, etc) or undefined
+	   */
 	  YouTube.prototype.parse = function (url, params) {
 	    var channelResult = this.parseChannelUrl(url);
 	    if (channelResult) {
@@ -1136,6 +1394,26 @@
 	  return youtube;
 	}
 
+	/**
+	 * SoundCloud provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Tracks: soundcloud.com/USER/TRACK
+	 * - Playlists: soundcloud.com/USER/sets/PLAYLIST
+	 * - API tracks/playlists via oEmbed
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Track
+	 * provider.parse('https://soundcloud.com/artist/song-name')
+	 * // Returns: { id: 'TRACK_ID', mediaType: 'track', provider: 'soundcloud' }
+	 * 
+	 * @example
+	 * // Playlist
+	 * provider.parse('https://soundcloud.com/artist/sets/collection-name')
+	 * // Returns: { id: 'PLAYLIST_ID', mediaType: 'playlist', provider: 'soundcloud' }
+	 */
 	var soundcloud;
 	var hasRequiredSoundcloud;
 	function requireSoundcloud() {
@@ -1145,12 +1423,19 @@
 	    combineParams = _require$$.combineParams,
 	    getTime = _require$$.getTime;
 	  function SoundCloud() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'soundcloud';
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl,
 	      embed: this.createEmbedUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      TRACK: 'track',
 	      PLAYLIST: 'playlist',
@@ -1250,6 +1535,15 @@
 	  return soundcloud;
 	}
 
+	/**
+	 * TeacherTube provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Videos: teachertube.com/video/ID
+	 * - Audio, documents, channels, collections, and groups
+	 * 
+	 * @constructor
+	 */
 	var teachertube;
 	var hasRequiredTeachertube;
 	function requireTeachertube() {
@@ -1258,13 +1552,22 @@
 	  var _require$$ = requireUtil(),
 	    combineParams = _require$$.combineParams;
 	  function TeacherTube() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'teachertube';
+
+	    /** @type {string[]} Alternative domain names */
 	    this.alternatives = [];
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl,
 	      embed: this.createEmbedUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video',
 	      AUDIO: 'audio',
@@ -1345,6 +1648,20 @@
 	  return teachertube;
 	}
 
+	/**
+	 * TikTok provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Videos: tiktok.com/@USER/video/ID
+	 * - Short URLs: vm.tiktok.com/ID or vt.tiktok.com/ID
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // TikTok video
+	 * provider.parse('https://www.tiktok.com/@username/video/1234567890')
+	 * // Returns: { id: '1234567890', mediaType: 'video', provider: 'tiktok' }
+	 */
 	var tiktok;
 	var hasRequiredTiktok;
 	function requireTiktok() {
@@ -1353,16 +1670,30 @@
 	  var _require$$ = requireUtil(),
 	    combineParams = _require$$.combineParams;
 	  function TikTok() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'tiktok';
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video'
 	    };
 	  }
 	  tiktok = TikTok;
+
+	  /**
+	   * Parse TikTok URL to extract video information
+	   * @param {string} url - TikTok URL
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Object|undefined} Video information (id, mediaType, params) or undefined
+	   */
 	  TikTok.prototype.parse = function (url, params) {
 	    var result = {
 	      params: params,
@@ -1390,6 +1721,11 @@
 	  return tiktok;
 	}
 
+	/**
+	 * TED provider plugin
+	 * Supports parsing and URL generation for TED talks and playlists
+	 * @constructor
+	 */
 	var ted;
 	var hasRequiredTed;
 	function requireTed() {
@@ -1472,6 +1808,20 @@
 	  return ted;
 	}
 
+	/**
+	 * Facebook provider plugin
+	 * 
+	 * Supports parsing and URL generation for:
+	 * - Videos: facebook.com/watch/?v=ID or fb.watch/ID
+	 * - Page videos: facebook.com/PAGE/videos/ID
+	 * 
+	 * @constructor
+	 * 
+	 * @example
+	 * // Facebook video
+	 * provider.parse('https://www.facebook.com/watch/?v=1234567890')
+	 * // Returns: { id: '1234567890', mediaType: 'video', provider: 'facebook' }
+	 */
 	var facebook;
 	var hasRequiredFacebook;
 	function requireFacebook() {
@@ -1480,18 +1830,34 @@
 	  var _require$$ = requireUtil(),
 	    combineParams = _require$$.combineParams;
 	  function Facebook() {
+	    /** @type {string} Provider identifier */
 	    this.provider = 'facebook';
+
+	    /** @type {string[]} Alternative domain names */
 	    this.alternatives = [];
+
+	    /** @type {string} Default URL format */
 	    this.defaultFormat = 'long';
+
+	    /** @type {Object<string, Function>} Available URL format handlers */
 	    this.formats = {
 	      "long": this.createLongUrl,
 	      watch: this.createWatchUrl
 	    };
+
+	    /** @type {Object<string, string>} Media type constants */
 	    this.mediaTypes = {
 	      VIDEO: 'video'
 	    };
 	  }
 	  facebook = Facebook;
+
+	  /**
+	   * Parse Facebook URL to extract video information
+	   * @param {string} url - Facebook URL
+	   * @param {Record<string, string>} params - Query parameters
+	   * @returns {Object|undefined} Video information (id, mediaType, params) or undefined
+	   */
 	  Facebook.prototype.parse = function (url, params) {
 	    var result = {
 	      params: params,
