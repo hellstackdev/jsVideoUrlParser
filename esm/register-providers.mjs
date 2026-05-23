@@ -1,0 +1,15 @@
+import '../lib/provider/allocine.js';
+import '../lib/provider/canalplus.js';
+import '../lib/provider/coub.js';
+import '../lib/provider/dailymotion.js';
+import '../lib/provider/loom.js';
+import '../lib/provider/twitch.js';
+import '../lib/provider/vimeo.js';
+import '../lib/provider/wistia.js';
+import '../lib/provider/youku.js';
+import '../lib/provider/youtube.js';
+import '../lib/provider/soundcloud.js';
+import '../lib/provider/teachertube.js';
+import '../lib/provider/tiktok.js';
+import '../lib/provider/ted.js';
+import '../lib/provider/facebook.js';

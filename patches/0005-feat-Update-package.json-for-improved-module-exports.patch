@@ -1,0 +1,95 @@
+From 9c167bba8c82fe9d3e1b6950c101a9d5d78e5fc9 Mon Sep 17 00:00:00 2001
+From: jeffrey-omega <>
+Date: Fri, 22 May 2026 15:53:28 +0200
+Subject: [PATCH 5/9] feat: Update package.json for improved module exports and
+ add CI workflow
+
+---
+ .github/workflows/ci.yml | 36 ++++++++++++++++++++++++++++++++++++
+ package.json             | 18 ++++++++++++++++--
+ 2 files changed, 52 insertions(+), 2 deletions(-)
+ create mode 100644 .github/workflows/ci.yml
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+new file mode 100644
+index 0000000..47f4f48
+--- /dev/null
++++ b/.github/workflows/ci.yml
+@@ -0,0 +1,36 @@
++name: CI
++
++on:
++  push:
++    branches:
++      - master
++  pull_request:
++
++jobs:
++  test:
++    runs-on: ubuntu-latest
++    strategy:
++      fail-fast: false
++      matrix:
++        node-version:
++          - 18
++          - 20
++
++    steps:
++      - name: Checkout repository
++        uses: actions/checkout@v4
++
++      - name: Use Node.js ${{ matrix.node-version }}
++        uses: actions/setup-node@v4
++        with:
++          node-version: ${{ matrix.node-version }}
++          cache: npm
++
++      - name: Install dependencies
++        run: npm ci --legacy-peer-deps
++
++      - name: Run tests
++        run: npm run test
++
++      - name: Build distribution
++        run: npm run build
+\ No newline at end of file
+diff --git a/package.json b/package.json
+index 0c5aab1..98a6261 100755
+--- a/package.json
++++ b/package.json
+@@ -2,9 +2,22 @@
+   "name": "js-video-url-parser",
+   "version": "0.5.1",
+   "description": "A parser to extract provider, video id, starttime and others from YouTube, Vimeo, ... urls",
+-  "main": "lib/index.js",
++  "main": "./lib/index.js",
+   "browser": "dist/jsVideoUrlParser.js",
+-  "types": "lib",
++  "types": "./lib/index.d.ts",
++  "exports": {
++    ".": {
++      "types": "./lib/index.d.ts",
++      "require": "./lib/index.js",
++      "default": "./lib/index.js"
++    },
++    "./lib/*": {
++      "types": "./lib/*.d.ts",
++      "require": "./lib/*.js",
++      "default": "./lib/*.js"
++    },
++    "./package.json": "./package.json"
++  },
+   "repository": {
+     "type": "git",
+     "url": "https://github.com/Zod-/jsVideoUrlParser.git"
+@@ -54,6 +67,7 @@
+     "build": "rollup -c rollup.config.js",
+     "lint": "eslint . --fix",
+     "lintdryfix": "eslint . --fix-dry-run",
++    "check": "npm run test && npm run build",
+     "all": "npm audit && npm run test && npm run lint && npm run build"
+   }
+ }
+-- 
+2.47.3
+
